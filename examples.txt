@@ -1,0 +1,349 @@
+Dis P[a, b] (Neg P[a, b])
+
+AlphaDis
+  P[a, b]
+  Neg P[a, b]
+Basic
+
+-
+
+# Example 2
+
+Imp (Uni Imp P[0] Q[0]) Imp (Exi P[0]) (Exi Q[0])
+
+AlphaImp
+  Neg (Uni (Imp P[0] Q[0]))
+  Imp (Exi P[0]) (Exi Q[0])
+Ext
+  Imp (Exi P[0]) (Exi Q[0])
+  Neg (Uni (Imp P[0] Q[0]))
+AlphaImp
+  Neg (Exi P[0])
+  Exi Q[0]
+  Neg (Uni (Imp P[0] Q[0]))
+DeltaExi
+  Neg P[a]
+  Exi Q[0]
+  Neg (Uni (Imp P[0] Q[0]))
+Ext
+  Neg (Uni (Imp P[0] Q[0]))
+  Neg P[a]
+  Exi Q[0]
+GammaUni
+  Neg Imp P[a] Q[a]
+  Neg P[a]
+  Exi Q[0]
+BetaImp
+  P[a]
+  Neg P[a]
+  Exi Q[0]
++
+  Neg Q[a]
+  Neg P[a]
+  Exi Q[0]
+Basic
+  Neg Q[a]
+  Neg P[a]
+  Exi Q[0]
+Ext
+  Exi Q[0]
+  Neg Q[a]
+GammaExi
+  Q[a]
+  Neg Q[a]
+Basic
+
+-
+
+# Example 3
+
+Imp (Uni (Imp (Neg P[0]) P[a[0]])) (Exi (Con P[0] P[a[a[0]]]))
+
+AlphaImp
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+Ext
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+GammaUni
+  Neg (Imp (Neg P[a]) P[a[a]])
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+BetaImp
+  Neg P[a]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a]]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+Ext
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a]]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+GammaUni
+  Neg (Imp (Neg P[a[a]]) P[a[a[a]]])
+  Neg P[a]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg (Imp (Neg P[a[a[a]]]) P[a[a[a[a]]]])
+  Neg P[a[a]]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+BetaImp
+  Neg P[a[a]]
+  Neg P[a]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a[a]]]
+  Neg P[a]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Exi (Con P[0] P[a[a[0]]])
+Ext
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Exi (Con P[0] P[a[a[0]]])
+  Neg P[a[a[a]]]
+  Neg P[a]
++
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Exi (Con P[0] P[a[a[0]]])
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+GammaExi
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Con P[a] P[a[a[a]]]
+  Neg P[a[a[a]]]
+  Neg P[a]
++
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Con P[a[a]] P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+BetaCon
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  P[a]
+  Neg P[a[a[a]]]
+  Neg P[a]
++
+  P[a[a[a]]]
+  Neg P[a[a[a]]]
+  Neg P[a]
++
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
++
+  P[a[a]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
++
+  P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+Ext
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  P[a]
+  Neg P[a]
++
+  P[a[a[a]]]
+  Neg P[a[a[a]]]
++
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
++
+  P[a[a]]
+  Neg P[a[a]]
++
+  P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+Basic
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg (Uni (Imp (Neg P[0]) P[a[0]]))
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
+GammaUni
+  Neg (Imp (Neg P[a[a[a]]]) P[a[a[a[a]]]])
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg (Imp (Neg P[a[a[a[a]]]]) P[a[a[a[a[a]]]]])
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
+BetaImp
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+  Neg P[a]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
++
+  Neg P[a[a[a[a[a]]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Exi (Con P[0] P[a[a[0]]])
+Ext
+  Exi (Con P[0] P[a[a[0]]])
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  Exi (Con P[0] P[a[a[0]]])
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  Exi (Con P[0] P[a[a[0]]])
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
++
+  Exi (Con P[0] P[a[a[0]]])
+  Neg P[a[a[a[a[a]]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+GammaExi
+  Con P[a] P[a[a[a]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  Con P[a[a]] P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  Con P[a[a]] P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
++
+  Con P[a[a[a]]] P[a[a[a[a[a]]]]]
+  Neg P[a[a[a[a[a]]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+BetaCon
+  P[a]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  P[a[a[a]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  P[a[a]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a]]
+  Neg P[a]
++
+  P[a[a]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
++
+  P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
++
+  P[a[a[a]]]
+  Neg P[a[a[a[a[a]]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
++
+  P[a[a[a[a[a]]]]]
+  Neg P[a[a[a[a[a]]]]]
+  Neg P[a[a[a]]]
+  Neg P[a[a]]
+Ext
+  P[a]
+  Neg P[a]
++
+  P[a[a[a]]]
+  Neg P[a[a[a]]]
++
+  P[a[a]]
+  Neg P[a[a]]
++
+  P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
++
+  P[a[a]]
+  Neg P[a[a]]
++
+  P[a[a[a[a]]]]
+  Neg P[a[a[a[a]]]]
++
+  P[a[a[a]]]
+  Neg P[a[a[a]]]
++
+  P[a[a[a[a[a]]]]]
+  Neg P[a[a[a[a[a]]]]]
+Basic

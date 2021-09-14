@@ -1,0 +1,87 @@
+body {
+    margin: 0px;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    margin: 0px;
+    padding: 0px;
+    align-items: center;
+    height: 5%;
+    font-family: Arial;
+    background-color: black;
+}
+
+nav p {
+    padding: 10px;
+    color: #ffffff;
+}
+
+nav p a {
+    padding: 7px;
+    color: black;
+    background-color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    width: 100%;
+    display: block;
+}
+
+#root {
+    height: 95%;
+}
+
+#position {
+    min-width: 8em;
+    margin-right: 7em;
+    text-align: right;
+}
+
+div {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    display: flex;
+}
+
+section {
+    padding: 0 20px 0 20px;
+    margin: 0;
+    overflow: auto;
+    text-align: left;
+    width: auto;
+    height: 95%;
+}
+
+pre {
+    background: #DADADA;
+    padding: 20px;
+    margin: 10px;
+    flex: 0 0 50%;
+    flex: 2;
+    overflow: auto;
+    text-align: left;
+}
+
+textarea {
+    text-align: left;
+    flex: 1;
+    padding: 20px;
+    margin: 10px;
+    flex: 0 0 50%;
+    resize: none;
+    overflow: auto;
+}
+
+textarea:focus {
+    outline: 1px solid #000;
+}
+
+@media screen and (max-width: 990px) {
+  div { flex-direction: column; }
+  textarea { flex: 0 0 50%; }
+  pre { flex-basis: 0 0 50%; }
+  #position { min-width: 8em; }
+}
