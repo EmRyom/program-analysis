@@ -6,8 +6,8 @@ import Text.Parsing.Parser.Token (GenLanguageDef(..), LanguageDef, TokenParser, 
 
 languageDef :: LanguageDef
 languageDef = LanguageDef
-  { commentStart: "(*"
-  , commentEnd: "*)"
+  { commentStart: "/*"
+  , commentEnd: "*/"
   , commentLine: ""
   , nestedComments: false
   , identStart: letter

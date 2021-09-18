@@ -2,6 +2,13 @@ module AST where
 
 data Program = Program (Declaration) (Statement)
 
+data Declaration 
+  = DVar String
+  | DArray String Int
+  | DRecord String
+  | None
+  | DDouble Declaration Declaration
+
 data Statement 
   = LDef LExp AExp
   | RDef String AExp AExp 
@@ -33,13 +40,6 @@ data BExp
   | Boolean BExp Opb BExp
   | Negation BExp
 
-data Declaration 
-  = DVar String
-  | DArray String Int
-  | DRecord String
-  | None
-  | DDouble Declaration Declaration
-
 data Opa  
   = Addition 
   | Substraction
@@ -58,3 +58,6 @@ data Opr
 data Opb
   = And 
   | Or
+
+
+data Edge = E Int String Int

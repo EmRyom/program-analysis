@@ -6,7 +6,7 @@ import Control.Monad.State (get, modify, put, runState)
 import Data.Either (Either(..))
 import Data.Functor ((<$>))
 import Data.HeytingAlgebra (not)
-import Data.List (List, (:), singleton, null, sortBy, uncons, unsnoc)
+import Data.List (List(..), (:), singleton, null, sortBy, uncons, unsnoc)
 import Data.Map (Map, empty, insert, isEmpty, lookup, toUnfoldable)
 import Data.Maybe (Maybe(..))
 import Data.Ord (compare)
@@ -27,7 +27,7 @@ generate (Left err) =
   let message = parseErrorMessage err in
   let pos = showPosition $ parseErrorPosition err in
   "Error: " <> message <> " at " <> pos
-generate (Right p) = showProgram p
+generate (Right p) = initPG $ pgProgram p -- showProgram p
 
 return :: String 
 return ="""
@@ -38,48 +38,46 @@ showProgram (Program d s) = showDeclaration d <> showStatement s
 
 showStatement :: Statement -> String
 showStatement x = case x of 
-  LDef a b ->  showLExp a <> ":=" <> showAExp b <> return 
-  RDef a b c ->  a <> ":=" <> showAExp b <> showAExp c <> return 
-  If a b -> "If: if " <> showBExp a <> " then " <> showStatement b <> return
-  Ifelse a b c -> "If-else: if " <> showBExp a <> " then " <> showStatement b <> " else " <> showStatement c <> return 
-  While a b -> "While: while " <> showBExp a <> showStatement b <> return 
-  SDouble a b -> "S-leaf: " <> showStatement a <> return <> 
-                 "S-node: " <> showStatement b <> return 
-  Read a -> "Read: " <> showLExp a 
-  Write a -> "Write: " <> showAExp a 
+  LDef a b ->  showLExp a <> ":=" <> showAExp b <> ";" 
+  RDef a b c ->  a <> ":=(" <> showAExp b <> "," <> showAExp c <> ");" 
+  If a b -> "if (" <> showBExp a <> ") then {" <> showStatement b <> "}"
+  Ifelse a b c -> "if (" <> showBExp a <> ") then {" <> showStatement b <> "} else {" <> showStatement c <> "}" 
+  While a b -> "while (" <> showBExp a <> ") {" <> showStatement b <> "}" 
+  SDouble a b -> showStatement a <> return <> showStatement b <> return 
+  Read a -> "read " <> showLExp a 
+  Write a -> "write " <> showAExp a 
 
 showLExp :: LExp -> String
 showLExp x = case x of 
-  LVar a -> "Lx: " <> a
-  LArray a b -> "LArray: " <> a <> "[" <> showAExp b <> "]"
-  LRfst a -> "LRfst: " <> a <> ".fst"
-  LRsnd b -> "LRsnd: " <> b <> ".snd"
+  LVar a -> a
+  LArray a b -> a <> "[" <> showAExp b <> "]"
+  LRfst a -> a <> ".fst"
+  LRsnd b -> b <> ".snd"
 
 showAExp :: AExp -> String 
 showAExp x = case x of 
-  ANumber a -> "ANumber: " <> show a
-  AVar a -> "AVar: " <> a 
-  AArray a b -> "AArray: " <> a <> "[" <> showAExp b <> "]"
-  ARfst a -> "ARfst: " <> a <> ".fst"
-  ARsnd b -> "ARsnd: " <> b <> ".snd"
-  Arithmetic a b c -> "ArithmeticOp: " <> showAExp a <> showOpa b <> showAExp c
+  ANumber a -> show a
+  AVar a -> a 
+  AArray a b -> a <> "[" <> showAExp b <> "]"
+  ARfst a -> a <> ".fst"
+  ARsnd b -> b <> ".snd"
+  Arithmetic a b c -> showAExp a <> showOpa b <> showAExp c
   
 showBExp :: BExp -> String 
 showBExp x = case x of 
   True -> "true"
   False -> "false"
-  Relational a b c -> "RelationalOp: " <> showAExp a <> showOpr b <> showAExp c
-  Boolean a b c -> "BooleanOp: " <>showBExp a <> showOpb b <> showBExp c
-  Negation a -> "Negation: not " <> showBExp a
+  Relational a b c -> showAExp a <> showOpr b <> showAExp c
+  Boolean a b c -> showBExp a <> showOpb b <> showBExp c
+  Negation a -> "not " <> showBExp a
 
 showDeclaration :: Declaration -> String
 showDeclaration x = case x of 
-  DVar a -> "DVar: int " <> a <> return 
-  DArray a b ->  "DArray: int[" <> show b <> "] " <> a <> return 
-  DRecord a -> "DRecord: " <> a <> return 
-  DDouble a b -> "D-node: " <> showDeclaration a <> return <> 
-             "D-leaf: " <> showDeclaration b <> return 
-  None -> "D-stop: e" <> return 
+  DVar a -> "int " <> a <> ";"
+  DArray a b ->  "int[" <> show b <> "] " <> a <> ";"
+  DRecord a -> "{int fst; int snd} " <> a <> ";" 
+  DDouble a b -> showDeclaration a <> return <> showDeclaration b <> return 
+  None -> "e" 
 
 showOpa :: Opa -> String 
 showOpa x = case x of 
@@ -106,21 +104,29 @@ showOpb x = case x of
 {-
 astGraph :: Int -> Program -> String 
 astGraph i (Program a b) = case astDeclaration i a of 
-  a /\ b -> """digraph program_graph {rankdir=TB;
+  c /\ d -> """digraph program_graph {rankdir=TB;
 node [shape = circle]
-""" <> a <> astStatement b
+""" <> c <> astStatement d b
 
 astDeclaration :: Int -> Declaration -> Tuple String Int 
 astDeclaration i x = case x of 
   DVar a -> (makeEdge ("int " <> a) i (i+1) /\ (i+1))
   DArray a b -> (makeEdge ("int[" <> show b <> "] " <> a) i (i+1) /\ (i+1))
-  None -> 
+  None -> (makeEdge "e" i (i+1)) /\ (i+1)
+  DRecord a -> (makeEdge ("record " <> a) i (i+1) ) /\ (i+1)
+  DDouble a b -> case astDeclaration i a of 
+    (c /\ d) -> case astDeclaration d b of
+      (e /\ f) -> ((c <> e) /\ f)
+
+astStatement :: Int -> Statement -> String 
+astStatement _ _ = "}" <> return 
 
 
 makeEdge :: String -> Int -> Int -> String
-makeEdge a b c = "q" <> show b <> " -> q" <> show c <> " [label = \"" <> a """\"];
-"""
-  
+makeEdge a b c = "q" <> show b <> " -- q" <> show c <> " [label = \"" <> a <> "\"];" <> return 
+
+
+
 digraph program_graph {rankdir=TB;
 node [shape = circle]; q_start;
 node [shape = doublecircle]; q_end; 
@@ -141,5 +147,68 @@ q4 -> q1 [label = "i:=i+1"];
 q1 -> q_end [label = "!(i<n)"];
 }
 -}
+
+edgesConcat :: (List Edge) -> (List Edge) -> (List Edge)
+edgesConcat (Nil) b = b
+edgesConcat (a:as) (b) = edgesConcat (as) (a:b)
+
+initPG :: (List Edge) -> String 
+initPG a = """digraph program_graph {rankdir=TB;
+node [shape = circle]
+""" <> toPG a <> """
+}
+"""
+
+toPG :: (List Edge) -> String 
+toPG (E b t d:as) = makeEdge t b d <> toPG as
+toPG _ = ""
+
+makeEdge :: String -> Int -> Int -> String
+makeEdge a b c = "q" <> show b <> " -> q" <> show c <> " [label = \"" <> a <> "\"];" <> return 
+
+
+pgProgram :: Program -> (List Edge)
+pgProgram (Program d s) = case pgDeclaration 0 d of 
+  (i /\ led) -> case pgStatement i s of 
+    (f /\ les) -> edgesConcat led les
+
+pgDeclaration :: Int -> Declaration -> Tuple Int (List Edge)
+pgDeclaration l d = case d of 
+  DVar x -> ((l+1) /\ singleton (E l ("int " <> x) (l+1)))
+  DArray x t -> (l+1) /\ singleton (E l ("int[" <> show t <> "]" <> x) (l+1))
+  DRecord x -> (l+1) /\ singleton (E l ("record " <> x) (l+1))
+  None -> (l /\ Nil)
+  DDouble x1 x2 -> case pgDeclaration l x1 of 
+    (i /\ led) -> case pgDeclaration i x2 of 
+      (f /\ led2) -> (f /\ edgesConcat led led2)
+
+pgStatement :: Int -> Statement -> Tuple Int (List Edge)
+pgStatement l s = case s of
+  LDef a b -> (l+1) /\ singleton(E l (showLExp a <> ":=" <> showAExp b) (l+1))
+  RDef a b1 b2 -> (l+1) /\ singleton (E l (a <> ":=(" <> showAExp b1 <> "," <> showAExp b2 <> ")") (l+1))
+  SDouble a b -> case pgStatement l a of 
+    (i /\ les) -> case pgStatement i b of 
+      (f /\ les2) -> f /\ edgesConcat les les2
+  If a b -> let trueEdge = E l (showBExp a) (l+1) in 
+    case pgStatement (l+1) b of 
+      (i /\ les) -> (i /\ (edgesConcat (trueEdge:les) (singleton (E l ("!" <> showBExp a) i))))
+  Ifelse a b1 b2 -> let trueEdge = E l (showBExp a) (l+1) in 
+    case pgStatement (l+1) b1 of 
+      (i /\ les) -> let falseEdge = E l ("!" <> showBExp a) (i+1) in
+        case pgStatement (i+1) b2 of 
+          (f /\ les2) -> let connecting = E i "" f in
+            (f /\ edgesConcat (trueEdge:les) (edgesConcat (falseEdge:les2) (singleton connecting)))
+  While a b -> let trueEdge = E l (showBExp a) (l+1) in 
+    case pgStatement (l+1) b of 
+      (i /\ les) -> (i /\ (edgesConcat (trueEdge:les) (singleton (E i "" l))))
+  Read a -> (l+1) /\ singleton (E l ("read " <> showLExp a) (l+1))
+  Write a -> ((l+1) /\ singleton (E l ("write " <> showAExp a) (l+1)))
+
+
+
+
+
+
+
 
 

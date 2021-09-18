@@ -19,6 +19,11 @@ list2tree (a:Nil) = a
 list2tree (a:as) = SDouble a $ list2tree as
 list2tree Nil = Read $ LVar "Something went wrong"
 
+list2tree2 :: (List Declaration) -> Declaration
+list2tree2 (a:as) = DDouble a $ list2tree2 as
+list2tree2 _ = None
+
+
 statement :: SParser Statement
 statement = fix allSta
   where 
@@ -61,7 +66,7 @@ elchoice i v1 = case i of
                   [ (do 
                     token.reservedOp ","
                     v2 <- aexp 
-                    pure $ RDef (lexp2str i) v1 v2)
+                    pure $ RDef x v1 v2)
                   , (do
                     pure $ LDef i v1)
                   ] <?> "a statement"
@@ -69,31 +74,31 @@ elchoice i v1 = case i of
     token.reserved " @@@ "
     pure $ LDef i v1) <?> "an arithmetic expression"
 
-lexp2str :: LExp -> String
-lexp2str (LVar x) = x
-lexp2str _ = " i am error "
-
-
 ifsta :: SParser Statement
 ifsta = do 
   token.reserved "if"
   b <- token.parens bexp
-  s1 <- token.braces $ many statement
+  s1 <- token.braces $ statements
   a <- ifelse b s1
   pure $ a 
 
+statements :: SParser Statement
+statements = fix $ \_ -> do 
+  s1 <- statement
+  s2 <- many statement
+  pure $ (list2tree (s1:s2))
 
-ifelse :: BExp -> (List Statement) -> SParser Statement
+ifelse :: BExp -> Statement -> SParser Statement
 ifelse b s1 = fix allIfs 
   where 
     allIfs _ = choice 
       [ 
         (do 
         token.reserved "else"
-        s2 <- token.braces $ many statement
-        pure $ Ifelse b (list2tree s1) (list2tree s2))
+        s2 <- token.braces $ statements
+        pure $ Ifelse b (s1) (s2))
       , (do 
-        pure $ If b (list2tree s1))
+        pure $ If b (s1))
       ] <?> "a statement"
 
 
@@ -101,20 +106,22 @@ while :: SParser Statement
 while = do 
   token.reserved "while"
   b <- token.parens bexp
-  s <- token.braces $ many statement
-  pure $ While b (list2tree s)
+  s <- token.braces statements
+  pure $ While b s
 
 
 read :: SParser Statement 
 read = do
   token.reserved "read"
   s <- lexp
+  token.reserved ";"
   pure $ Read s 
 
 write :: SParser Statement 
 write = do
   token.reserved "write"
   s <- aexp
+  token.reserved ";"
   pure $ Write s 
 
 
@@ -155,17 +162,17 @@ opr = fix allOpr
   where 
     allOpr _ = choice 
       [ (do 
-        token.reservedOp ">"
-        pure $ More ) 
-      , (do 
-        token.reservedOp "<"
-        pure $ Less )
-      , (do 
         token.reservedOp ">="
         pure $ MoreEq ) 
       , (do 
         token.reservedOp "<="
         pure $ LessEq )
+      , (do 
+        token.reservedOp ">"
+        pure $ More ) 
+      , (do 
+        token.reservedOp "<"
+        pure $ Less )
       , (do 
         token.reservedOp "=="
         pure $ Eq ) 
@@ -279,11 +286,6 @@ opa = fix allOpa
 
 
 
-list2tree2 :: (List Declaration) -> Declaration
-list2tree2 (a:as) = DDouble a $ list2tree2 as
-list2tree2 _ = None
-
-
 declaration :: SParser Declaration
 declaration = fix allDec 
   where 
@@ -325,9 +327,8 @@ dintc = fix allDec2
 program :: SParser Program
 program = do
   d <- many declaration
-  s1 <- statement
-  s2 <- many statement
-  pure $ Program (list2tree2 d) (list2tree (s1:s2))
+  s <- statements
+  pure $ Program (list2tree2 d) s
 
 parse :: String -> Either ParseError Program
 parse input = runParser input (token.whiteSpace *> token.braces program <* eof)

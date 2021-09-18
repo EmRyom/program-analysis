@@ -24,7 +24,7 @@ function copyTextToClipboard(text) {
     fallbackCopyTextToClipboard(text);
     return;
   }
-  navigator.clipboard.writeText(text);
+  navigator.clipboard.writeText(text.replaceAll("-&gt;","->"));
 }
 
 var copyBtn = document.querySelector('#clipboard-btn');
