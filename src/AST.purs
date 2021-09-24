@@ -59,5 +59,3 @@ data Opb
   = And 
   | Or
 
-
-data Edge = E Int String Int

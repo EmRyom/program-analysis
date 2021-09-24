@@ -8,8 +8,9 @@ import Concur.React.DOM as D
 import Concur.React.Props as P
 import Concur.React.Run (runWidgetInDom)
 import Effect (Effect)
-import Parser (parse)
 import Generator (generate)
+import Parser (parse)
+import ProgramGraph (pgGenerate)
 
 type InputState = {currentText :: String}
 
@@ -45,7 +46,7 @@ initState :: InputState
 initState = {currentText: initProof}
 
 showState :: InputState -> String
-showState s = generate $ parse s.currentText
+showState s = pgGenerate $ parse s.currentText
 
 
 
