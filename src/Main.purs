@@ -17,15 +17,6 @@ type InputState = {currentText :: String}
 initProof :: String
 initProof = """
 {
-int x;
-x := 10;
-while (x!=0) {
-  x := (x-1);
-  }
-}
-
-/*
-{
 int a;
 int b;
 read a;
@@ -33,13 +24,13 @@ read b;
 while (a!=b) {
   if (a < b)  {
     b := (b - a);
-  } else {
-  if (b < a)  {a := (a - b);}
+  } 
+  if (b < a)  {
+    a := (a - b);
   }
+}
 write a;
 }
-}
-*/
 """
 
 initState :: InputState
