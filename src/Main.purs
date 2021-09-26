@@ -11,6 +11,7 @@ import Effect (Effect)
 import Generator (generate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
+import ReachingDefinition (rdGenerate)
 
 type InputState = {currentText :: String}
 
@@ -37,7 +38,7 @@ initState :: InputState
 initState = {currentText: initProof}
 
 showState :: InputState -> String
-showState s = pgGenerate $ parse s.currentText
+showState s = rdGenerate $ parse s.currentText
 
 
 

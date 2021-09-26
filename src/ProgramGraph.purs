@@ -15,7 +15,7 @@ import Data.String.Utils (unsafeRepeat)
 import Data.Traversable (intercalate, traverse)
 import Data.Tuple (Tuple, fst, snd)
 import Data.Tuple.Nested ((/\))
-import Prelude (show, bind, pure, show, ($), (+), (-), (<>), (<), (==))
+import Prelude (show, bind, pure, show, ($), (+), (-), (<>), (<), (==),(||))
 import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
 import Text.Parsing.Parser.Pos (Position(..))
 
@@ -38,7 +38,10 @@ node [shape = circle]
 """
 
 toPG :: (List Edge) -> String 
-toPG (E b t d:as) = makeEdge t b d <> toPG as
+toPG (E b t d:as) = case t of 
+  D x -> makeEdge (showDeclaration x) b d <> toPG as
+  S x -> makeEdge (showStatement x) b d <> toPG as
+  B x -> makeEdge (showBExp x) b d <> toPG as
 toPG _ = ""
 
 makeEdge :: String -> Int -> Int -> String
@@ -52,36 +55,34 @@ pgProgram (Program d s) = case pgDeclaration 0 d of
 
 pgDeclaration :: Int -> Declaration -> Tuple Int (List Edge)
 pgDeclaration l d = case d of 
-  DVar x -> ((l+1) /\ singleton (E l ("int " <> x) (l+1)))
-  DArray x t -> (l+1) /\ singleton (E l ("int[" <> show t <> "]" <> x) (l+1))
-  DRecord x -> (l+1) /\ singleton (E l ("record " <> x) (l+1))
   None -> (l /\ Nil)
   DDouble x1 x2 -> case pgDeclaration l x1 of 
     (i /\ led) -> case pgDeclaration i x2 of 
       (f /\ led2) -> (f /\ edgesConcat led led2)
+  _ -> ((l+1) /\ singleton (E l (D d) (l+1)))
 
 pgStatement :: Int -> Statement -> Tuple Int (List Edge)
 pgStatement lastNode s = case s of
   SDouble a b -> case pgStatement lastNode a of 
     (i /\ les) -> case pgStatement i b of 
       (f /\ les2) -> f /\ edgesConcat les les2
-  If a b -> let trueEdge = E lastNode (showBExp a) (lastNode+1) in 
+  If a b -> let trueEdge = E lastNode (B a) (lastNode+1) in 
     case pgStatement (lastNode+1) b of 
-      (i /\ les) -> let falseEdge = E lastNode ("!" <> showBExp a) i in 
+      (i /\ les) -> let falseEdge = E lastNode (B $ Negation a) i in 
         (i /\ (edgesConcat (trueEdge:les) (singleton falseEdge)))
-  Ifelse a b1 b2 -> let trueEdge = E lastNode (showBExp a) (lastNode+1) in 
+  Ifelse a b1 b2 -> let trueEdge = E lastNode (B a) (lastNode+1) in 
     case pgStatement (lastNode+1) b1 of 
-      (i /\ les) -> let falseEdge = E lastNode ("!" <> showBExp a) (i+1) in
+      (i /\ les) -> let falseEdge = E lastNode (B $ Negation a) (i+1) in
         case pgStatement (i+1) b2 of 
           (f /\ les2) -> let redded = redirect les i f in 
             f /\ (edgesConcat (trueEdge:redded) (falseEdge:les2))
-  While a b -> let trueEdge = E lastNode (showBExp a) (lastNode+1) in 
+  While a b -> let trueEdge = E lastNode (B a) (lastNode+1) in 
     case pgStatement (lastNode+1) b of 
       (i /\ (les)) -> let redded = redirect les i lastNode in 
-                      let newNode = (highest redded 0) + 2 in 
-                      let falseEdge = E lastNode ("!" <> showBExp a) newNode in 
+                      let newNode = (highest redded 0) + 1 in 
+                      let falseEdge = E lastNode (B $ Negation a) newNode in 
         newNode /\ (edgesConcat (trueEdge:redded) (singleton falseEdge))    
-  _ -> (lastNode+1) /\ singleton (E lastNode (showStatement s) (lastNode+1))
+  _ -> (lastNode+1) /\ singleton (E lastNode (S s) (lastNode+1))
 
 redirect :: List Edge -> Int -> Int -> List Edge
 redirect ((E i s o):tail) n m = 
@@ -91,11 +92,16 @@ redirect ((E i s o):tail) n m =
 redirect Nil n m = Nil 
 
 highest :: List Edge -> Int -> Int
-highest ((E _ _ g):as) b = if b < g then highest as g else highest as b
+highest ((E h _ g):as) b = if b < g || b < h 
+  then if g < h then highest as h else highest as g
+  else highest as b
 highest Nil b = b
 
-data Edge = E Int String Int
+data Edge = E Int Content Int
  
-
+data Content 
+  = D Declaration
+  | S Statement
+  | B BExp 
 
 

@@ -44,8 +44,8 @@ showStatement x = case x of
   Ifelse a b c -> "if (" <> showBExp a <> ") then {" <> showStatement b <> "} else {" <> showStatement c <> "}" 
   While a b -> "while (" <> showBExp a <> ") {" <> showStatement b <> "}" 
   SDouble a b -> showStatement a <> return <> showStatement b <> return 
-  Read a -> "read " <> showLExp a 
-  Write a -> "write " <> showAExp a 
+  Read a -> "read " <> showLExp a <> ";"
+  Write a -> "write " <> showAExp a <> ";"
 
 showLExp :: LExp -> String
 showLExp x = case x of 
@@ -69,7 +69,7 @@ showBExp x = case x of
   False -> "false"
   Relational a b c -> showAExp a <> showOpr b <> showAExp c
   Boolean a b c -> showBExp a <> showOpb b <> showBExp c
-  Negation a -> "not " <> showBExp a
+  Negation a -> "! " <> showBExp a
 
 showDeclaration :: Declaration -> String
 showDeclaration x = case x of 
