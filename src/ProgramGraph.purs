@@ -1,23 +1,13 @@
 module ProgramGraph where 
 
-import AST
-import Generator
-import Control.Monad.State (get, modify, put, runState)
+import AST (BExp(..), Declaration(..), Program(..), Statement(..))
+import Generator (return, showBExp, showDeclaration, showPosition, showStatement)
 import Data.Either (Either(..))
-import Data.Functor ((<$>))
-import Data.HeytingAlgebra (not)
-import Data.List (List(..), (:), length, singleton, null, sortBy, uncons, unsnoc, reverse)
-import Data.Map (Map, empty, insert, isEmpty, lookup, toUnfoldable)
-import Data.Maybe (Maybe(..))
-import Data.Ord (compare)
-import Data.String.CodeUnits (drop, dropRight)
-import Data.String.Utils (unsafeRepeat)
-import Data.Traversable (intercalate, traverse)
-import Data.Tuple (Tuple, fst, snd)
+import Data.List (List(..), singleton, (:))
+import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Prelude (show, bind, pure, show, ($), (+), (-), (<>), (<), (==),(||))
+import Prelude (show, ($), (+), (<>), (<), (==),(||))
 import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
-import Text.Parsing.Parser.Pos (Position(..))
 
 pgGenerate :: Either ParseError Program -> String
 pgGenerate (Left err) =
@@ -33,8 +23,7 @@ edgesConcat (a:as) (b) = edgesConcat (as) (a:b)
 initPG :: (List Edge) -> String 
 initPG a = """digraph program_graph {rankdir=TB;
 node [shape = circle]
-""" <> toPG a <> """
-}
+""" <> toPG a <> """}
 """
 
 toPG :: (List Edge) -> String 

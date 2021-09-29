@@ -2,20 +2,8 @@ module Generator where
 
 import AST
 
-import Control.Monad.State (get, modify, put, runState)
 import Data.Either (Either(..))
-import Data.Functor ((<$>))
-import Data.HeytingAlgebra (not)
-import Data.List (List(..), (:), length, singleton, null, sortBy, uncons, unsnoc)
-import Data.Map (Map, empty, insert, isEmpty, lookup, toUnfoldable)
-import Data.Maybe (Maybe(..))
-import Data.Ord (compare)
-import Data.String.CodeUnits (drop, dropRight)
-import Data.String.Utils (unsafeRepeat)
-import Data.Traversable (intercalate, traverse)
-import Data.Tuple (Tuple, fst, snd)
-import Data.Tuple.Nested ((/\))
-import Prelude (show, bind, pure, show, ($), (+), (-), (<>), (<), (==))
+import Prelude (show, ($), (<>))
 import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
 import Text.Parsing.Parser.Pos (Position(..))
 
@@ -69,7 +57,7 @@ showBExp x = case x of
   False -> "false"
   Relational a b c -> showAExp a <> showOpr b <> showAExp c
   Boolean a b c -> showBExp a <> showOpb b <> showBExp c
-  Negation a -> "! " <> showBExp a
+  Negation a -> "not (" <> showBExp a <> ")"
 
 showDeclaration :: Declaration -> String
 showDeclaration x = case x of 
