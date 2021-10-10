@@ -1,7 +1,7 @@
 module Basic where 
 
 
-import Data.List (List(..), (:), length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
+import Data.List (List(..), (:), head, length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
 import AST
 import ProgramGraph
 import Data.Tuple (Tuple)
@@ -28,11 +28,14 @@ findInitEdge _ = Nothing
 initAllTraversals :: List Edge -> String
 initAllTraversals edges = case findInitEdge edges of 
     Just e -> """/*
-    """ <> printListList (findAllTraversals edges (singleton e)) <> """
-*/ 
-"""
-    Nothing -> "Failed"
+        """ <> printListList (reverseEach $ findAllTraversals edges (singleton e)) <> """*/ 
+        """
+    Nothing -> "All Traversals Failed"
   
+
+reverseEach :: List (List Edge) -> List (List Edge)
+reverseEach (a:as) = (reverse a:reverseEach as)
+reverseEach Nil = Nil
 
 printListList :: List (List Edge) -> String
 printListList (a:as) = "T {" <> printList a <> """}
@@ -40,15 +43,19 @@ printListList (a:as) = "T {" <> printList a <> """}
 printListList _ = ""
 
 printList :: List Edge -> String 
-printList (E a (B b) c:as) = "(" <> show a <> ", " <> showBExp b <> ", " <> show c <> ")" <> printList as
-printList (E a (S s) c:as) = "(" <> show a <> ", " <> showStatement s <> ", " <> show c <> ")" <> printList as
-printList (E a (D d) c:as) = "(" <> show a <> ", " <> showDeclaration d <> ", " <> show c <> ")" <> printList as
+printList (E a (B b) c:as) = "(" <> show a <> ", " <> showBExp b <> ", " <> show c <> """)
+""" <> printList as
+printList (E a (S s) c:as) = "(" <> show a <> ", " <> showStatement s <> ", " <> show c <> """)
+""" <> printList as
+printList (E a (D d) c:as) = "(" <> show a <> ", " <> showDeclaration d <> ", " <> show c <> """)
+""" <> printList as
 printList _ = ""
 
 findAllTraversals :: List Edge -> List Edge -> List (List Edge)
 findAllTraversals edges (E a b c:avoid) = 
-  let newEdges = findExitingEdge edges c (E a b c:avoid) in 
-  forAllNewEdges edges (E a b c:avoid) newEdges 
+  case findConsMDisc edges c (E a b c:avoid) of 
+  Nil -> singleton (E a b c:avoid)
+  newEdges -> forAllNewEdges edges (E a b c:avoid) newEdges 
 findAllTraversals _ _ = Nil 
 
 forAllNewEdges :: List Edge -> List Edge -> List Edge -> List (List Edge)
@@ -63,16 +70,20 @@ mergeListList :: List (List Edge) -> List (List Edge) -> List (List Edge)
 mergeListList (a:as) b = mergeListList as (a:b)
 mergeListList Nil b = b
 
+findConsMDisc :: List Edge -> Int -> List Edge -> List Edge 
+findConsMDisc edges i disc = 
+  let candidates = findEdges edges i in 
+  difference candidates disc
 
-findExitingEdge :: List Edge -> Int -> List Edge -> List Edge
-findExitingEdge (E a b c:le) d avoid = 
-  if contains (E a b c) avoid 
-  then (findExitingEdge le d avoid) 
-  else 
-    if a == d 
-    then (E a b c:findExitingEdge le d (E a b c:avoid))
-    else (findExitingEdge le d avoid)
-findExitingEdge Nil d _ = Nil 
+findEdges :: List Edge -> Int -> List Edge
+findEdges (E out c inn:edges) i = 
+  if out == i then (E out c inn:findEdges edges i)
+  else findEdges edges i
+findEdges Nil _ = Nil 
+
+difference :: List Edge -> List Edge -> List Edge
+difference (a:as) b = if contains a b then difference as b else (a:difference as b)
+difference Nil _ = Nil
 
 contains :: Edge -> List Edge -> Boolean
 contains (E a1 b1 c1) ((E a2 b2 c2):bs) = 
@@ -80,6 +91,14 @@ contains (E a1 b1 c1) ((E a2 b2 c2):bs) =
   then true 
   else contains (E a1 b1 c1) bs 
 contains _ Nil = false 
+
+
+eqListEdge :: List Edge -> List Edge -> Boolean 
+eqListEdge (E a1 b1 c1:as) (E a2 b2 c2:bs) = if ((a1==a2) && (eqContent b1 b2) && c1 == c2) 
+  then eqListEdge as bs
+  else false
+eqListEdge Nil Nil = true
+eqListEdge _ _ = false 
 
 
 eqContent :: Content -> Content -> Boolean

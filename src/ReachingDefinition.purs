@@ -1,6 +1,6 @@
 module ReachingDefinition where
 
-import Data.List (List(..), (:), head, length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
+import Data.List (List(..), (:), head, last, length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
 import AST
 import Basic
 import ProgramGraph
@@ -28,28 +28,51 @@ initRD edges elements =
   let firstRD = unknownDefinition elements 0 in
   let initRun = firstRun edges firstRD in 
   case initRun of 
-  (a:as) -> mergeRD (reverse initRun) (run edges a Nil) 
-  Nil -> Nil
+  (a:as) /\ (b) -> case last b of 
+    Nothing -> Nil
+    Just l -> case (run edges firstRD (singleton l)) of 
+      (c /\ d) -> c
+  _ /\ _ -> Nil 
+
+
+
+
+{-
+
+reachingDefinition :: List Edge -> ReachingDefinition -> List Edge -> List Edge -> List ReachingDefinition
+reachingDefinition edges firstRD lastRun avoid = if eqListEdge edges avoid then 
+  
+  else 
+  case run edges firstRD avoid of 
+    (a /\ b) -> case lastRun of 
+      (c /\ d) -> if eqListEdge b d then
+        case last b of 
+          Just e -> reachingDefinition edges firstRD b (e:avoid)
+          Nothing -> reachingDefinition edges firstRD b (avoid)
+        else reachingDefinition edges firstRD b (avoid)-}
 
 
 mergeRD :: List ReachingDefinition -> List ReachingDefinition -> List ReachingDefinition
 mergeRD (a:as) b = mergeRD as (a:b)
 mergeRD Nil b = b
 
-firstRun :: List Edge -> ReachingDefinition -> List ReachingDefinition
+firstRun :: List Edge -> ReachingDefinition -> Tuple (List ReachingDefinition) (List Edge)
 firstRun cs (RD i as) = case findEdge cs i of 
-  Nothing -> Nil
+  Nothing -> Nil /\ Nil 
   Just c -> let newRD = solveConstraint (RD i as) c in
-    (newRD:firstRun cs newRD)
+    mergeTuples ((singleton newRD) /\ (singleton c)) (firstRun cs newRD)
+
+mergeTuples :: Tuple (List ReachingDefinition) (List Edge) -> Tuple (List ReachingDefinition) (List Edge) -> Tuple (List ReachingDefinition) (List Edge)
+mergeTuples ((a:as) /\ (b:bs)) ((cs) /\ (ds)) = mergeTuples ((as) /\ (bs)) ((a:cs) /\ (b:ds))
+mergeTuples ((Nil) /\ (b:bs)) ((cs) /\ (ds)) = (cs) /\ (ds)
+mergeTuples ((a) /\ (Nil)) ((cs) /\ (ds)) = (cs) /\ (ds)
 
 
-
-
-run :: List Edge -> ReachingDefinition -> List Edge -> List ReachingDefinition
+run :: List Edge -> ReachingDefinition -> List Edge -> Tuple (List ReachingDefinition) (List Edge)
 run cs (RD i as) disc = case findConsDisc cs i disc of 
-  Nothing -> Nil
+  Nothing -> Nil /\ Nil 
   Just c -> let newRD = solveConstraint (RD i as) c in 
-    (newRD:run cs newRD (c:disc))
+    mergeTuples ((singleton newRD) /\ (singleton c)) (run cs newRD (c:disc))
 
 
 findConsDisc :: List Edge -> Int -> List Edge -> Maybe Edge 

@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 
+import Basic (allTraversals)
 import Concur.Core (Widget)
 import Concur.React (HTML)
 import Concur.React.DOM as D
@@ -12,7 +13,6 @@ import Generator (generate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
 import ReachingDefinition (rdGenerate)
-import AllTraversals (allTraversals)
 
 type InputState = {currentText :: String}
 
@@ -39,7 +39,7 @@ initState :: InputState
 initState = {currentText: initProof}
 
 showState :: InputState -> String
-showState s = rdGenerate $ parse s.currentText
+showState s = allTraversals $ parse s.currentText
 
 
 
