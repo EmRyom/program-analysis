@@ -1,16 +1,16 @@
 module ReachingDefinition where
 
-import Data.List (List(..), (:), head, last, length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
 import AST
-import Basic
+import Data.Maybe
+import Generator
 import ProgramGraph
+import AllTraversals (initAllTraversals)
+import Data.Either (Either(..))
+import Data.List (List(..), (:), concat, head, last, length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Generator
-import Data.Either (Either(..))
-import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
-import Data.Maybe
 import Prelude (show, bind, pure, show, (&&), ($), (+), (-), (<>), (<), (==), negate)
+import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
 
 rdGenerate :: Either ParseError Program -> String
 rdGenerate (Left err) =
@@ -26,16 +26,38 @@ rdGenerate (Right p) = let edges = pgProgram p in case p of
 initRD :: List Edge -> List Element -> List ReachingDefinition
 initRD edges elements = 
   let firstRD = unknownDefinition elements 0 in
-  let initRun = firstRun edges firstRD in 
-  case initRun of 
-  (a:as) /\ (b) -> case last b of 
-    Nothing -> Nil
-    Just l -> case (run edges firstRD (singleton l)) of 
-      (c /\ d) -> c
-  _ /\ _ -> Nil 
+  let allT = initAllTraversals edges in 
+  case allT of 
+    (a:as) -> assemble (firstRD:concat (recRD (a:as) firstRD)) 0 
+    Nil -> Nil
+
+assemble :: List ReachingDefinition -> Int -> List ReachingDefinition
+assemble as i =
+  case nubBy eqAssignment (findRD as i) of
+    Nil -> Nil
+    r -> (RD i r:assemble as (i+1))
+
+ 
+
+findRD :: List ReachingDefinition -> Int -> List Assignment 
+findRD (RD i as:s) u = if i == u then mergeAssignment as (findRD s u) else findRD s u
+findRD Nil _ = Nil 
+
+mergeAssignment :: List Assignment -> List Assignment -> List Assignment
+mergeAssignment (a:as) b = mergeAssignment as (a:b)
+mergeAssignment Nil b = b
 
 
+recRD :: List (List Edge) -> ReachingDefinition -> List (List ReachingDefinition)
+recRD (a:as) r = (reachingDefinition a r:recRD as r)
+recRD Nil r = Nil 
 
+
+reachingDefinition :: List Edge -> ReachingDefinition -> List ReachingDefinition 
+reachingDefinition (a:as) b = 
+  let newRD = solveConstraint b a in
+  (newRD:reachingDefinition as newRD)
+reachingDefinition Nil _ = Nil
 
 {-
 
@@ -49,7 +71,7 @@ reachingDefinition edges firstRD lastRun avoid = if eqListEdge edges avoid then
         case last b of 
           Just e -> reachingDefinition edges firstRD b (e:avoid)
           Nothing -> reachingDefinition edges firstRD b (avoid)
-        else reachingDefinition edges firstRD b (avoid)-}
+        else reachingDefinition edges firstRD b (avoid)
 
 
 mergeRD :: List ReachingDefinition -> List ReachingDefinition -> List ReachingDefinition
@@ -75,21 +97,16 @@ run cs (RD i as) disc = case findConsDisc cs i disc of
     mergeTuples ((singleton newRD) /\ (singleton c)) (run cs newRD (c:disc))
 
 
-findConsDisc :: List Edge -> Int -> List Edge -> Maybe Edge 
-findConsDisc edges i disc = 
-  let candidates = findEdges edges i in 
-  case difference candidates disc of 
-  Nil -> head candidates
-  (a:as) -> Just a 
 
+eqRD :: ReachingDefinition -> ReachingDefinition -> Boolean
+eqRD (RD i as) (RD a is) = eqListAssignment as is && a == i
+eqRD _ _ = false
 
-difference :: List Edge -> List Edge -> List Edge
-difference (a:as) b = if contains a b then difference as b else (a:difference as b)
-difference Nil _ = Nil
+eqListAssignment :: List Assignment -> List Assignment -> Boolean
+eqListAssignment ()-}
 
-{-contains :: Edge -> List Edge -> Boolean
-contains c (d:ds) = if eqEdge c d then true else contains c ds
-contains c Nil = false -}
+eqAssignment :: Assignment -> Assignment -> Boolean 
+eqAssignment (A a b c) (A d e f) = eqElement a d && b == e && c == f
 
 eqConstraint :: Constraint -> Constraint -> Boolean
 eqConstraint (C a b c d) (C e f g h) = a == e && b == f && eqKill c g && eqGen d h
@@ -148,9 +165,9 @@ removeElement Nil _ = Nil
 constraint :: Edge -> Constraint
 constraint (E x y z) = case y of
   D a -> case a of 
-      DVar b -> C x z NoKill (Gen (Var b) x z)
-      DArray b c -> C x z NoKill $ Gen (Array b) x z
-      DRecord b -> C x z NoKill $ Gen (Record b) x z 
+      DVar b -> C x z (Kill (Var b)) (Gen (Var b) x z)
+      DArray b c -> C x z (Kill (Array b)) $ Gen (Array b) x z
+      DRecord b -> C x z (Kill (Record b)) $ Gen (Record b) x z 
       _ -> C x z NoKill NoGen
   S a -> case a of 
       LDef b c -> case b of 

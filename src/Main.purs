@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 
-import Basic (allTraversals)
+import AllTraversals (allTraversals)
 import Concur.Core (Widget)
 import Concur.React (HTML)
 import Concur.React.DOM as D
@@ -19,6 +19,21 @@ type InputState = {currentText :: String}
 initProof :: String
 initProof = """
 {
+int x;
+int y;
+int z;
+read x;
+read y;
+z := 1;  
+while (y > 0) {
+    z := (z * x); 
+    y := (y - 1);
+    }
+write z;
+}
+
+"""
+{-
 int a;
 int b;
 read a;
@@ -32,14 +47,14 @@ while (a!=b) {
   }
 }
 write a;
-}
 """
+-}
 
 initState :: InputState
 initState = {currentText: initProof}
 
 showState :: InputState -> String
-showState s = allTraversals $ parse s.currentText
+showState s = rdGenerate $ parse s.currentText
 
 
 
