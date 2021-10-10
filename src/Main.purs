@@ -39,7 +39,7 @@ initState :: InputState
 initState = {currentText: initProof}
 
 showState :: InputState -> String
-showState s = allTraversals $ parse s.currentText
+showState s = rdGenerate $ parse s.currentText
 
 
 
