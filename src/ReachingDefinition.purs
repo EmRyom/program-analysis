@@ -1,6 +1,6 @@
 module ReachingDefinition where
 
-import Data.List (List(..), (:), length, singleton, null, sortBy, uncons, unsnoc, nubBy)
+import Data.List (List(..), (:), length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
 import AST
 import ProgramGraph
 import Data.Tuple (Tuple)
@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Generator
 import Data.Either (Either(..))
 import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
+import Data.Maybe
 import Prelude (show, bind, pure, show, ($), (+), (-), (<>), (<), (==), negate)
 
 rdGenerate :: Either ParseError Program -> String
@@ -17,34 +18,40 @@ rdGenerate (Left err) =
   "Error: " <> message <> " at " <> pos
 rdGenerate (Right p) = let edges = pgProgram p in case p of 
   Program d s -> """/*
+""" <> printReachingDefinitions (worklist1 edges (defineVariables d Nil)) <> """
+*/""" <> initPG edges 
+  
+  
+{-"""/*
 """ <> (printReachingDefinitions $ initReachingDefinition edges (defineVariables d Nil)) <> """*/
 """ <> (initPG edges)
 
-initReachingDefinition :: List Edge -> List Element -> List ReachingDefinition
-initReachingDefinition edges elements = 
-  let cs = constraints edges in
+
+initWorklist :: List Edge -> List Element -> List ReachingDefinition
+initWorklist edges elements = 
+  let initRD = worklist1 edges elements in 
+  worklist2 edges 0 Nil
+-}
+
+worklist1 :: List Edge -> List Element -> List ReachingDefinition
+worklist1 edges elements = 
   let firstRD = unknownDefinition elements 0 in
-  let nextConstraints = findConstraint cs 0 in
-  reachingDefinition firstRD nextConstraints
+  (firstRD:(reverse $ makeEmptyRD (highest edges 0)))
 
-reachingDefinition :: ReachingDefinition -> List Constraint -> List ReachingDefinition
-reachingDefinition (RD i a) cs = 
-  let n = (applyConstraints (RD i a) (findConstraint cs i)) in
-  mergeRD (rd n cs) n
+worklist2 :: List Edge -> List ReachingDefinition -> List ReachingDefinition 
+worklist2 edges rds = 
 
+findPair :: List Edge -> List ReachingDefinition 
 
-rd :: List ReachingDefinition -> List Constraint -> List ReachingDefinition
-rd (a:as) e = mergeRD (reachingDefinition a e) (rd as e)
-rd Nil _ = Nil
+findOneEdge :: List Edge -> Int -> Maybe Edge
+findOneEdge (E a b c:es) d = if a == d 
+  then Just (E a b c)
+  else findOneEdge es d 
+findOneEdge Nil _ = Nothing 
 
-
-mergeRD :: List ReachingDefinition -> List ReachingDefinition -> List ReachingDefinition
-mergeRD (a:as) bs = mergeRD as (a:bs)
-mergeRD Nil a = a
-
-applyConstraints :: ReachingDefinition -> List Constraint -> List ReachingDefinition
-applyConstraints a (b:bs) = (solveConstraint a b:applyConstraints a bs)
-applyConstraints _ Nil = Nil 
+makeEmptyRD :: Int -> List ReachingDefinition
+makeEmptyRD 0 = Nil
+makeEmptyRD a = (RD a Nil: makeEmptyRD (a-1)) 
   
 solveConstraint :: ReachingDefinition -> Constraint -> ReachingDefinition
 solveConstraint (RD i a) (C _ o k g) = 
@@ -57,25 +64,12 @@ solveConstraint (RD i a) (C _ o k g) =
     Gen x y z -> RD o (A x y z:a)
     NoGen -> RD o a 
 
-
 removeElement :: List Assignment -> Element -> List Assignment
 removeElement (A a b c:as) d = 
   if name a == name d
   then removeElement as d
   else (A a b c:removeElement as d)
 removeElement Nil _ = Nil 
-
-findConstraint :: List Constraint -> Int -> List Constraint
-findConstraint (C x z a b:xs) y = 
-  if y == x 
-  then (C x z a b:findConstraint xs y)
-  else findConstraint xs y
-findConstraint Nil _ = Nil
-
-
-constraints :: List Edge -> List Constraint
-constraints (e:es) = (constraint e:constraints es)
-constraints Nil = Nil
 
 constraint :: Edge -> Constraint
 constraint (E x y z) = case y of
@@ -125,19 +119,6 @@ data Killset
   = Kill Element
   | NoKill
 
-findEdge :: List Edge -> Int -> List Edge
-findEdge (E a b c:le) d = 
-    if c == d 
-    then (E a b c:findEdge le d) 
-    else (findEdge le d)
-findEdge Nil d = Nil 
-
-findExitingEdge :: List Edge -> Int -> List Edge
-findExitingEdge (E a b c:le) d = 
-    if a == d 
-    then (E a b c:findExitingEdge le d) 
-    else (findExitingEdge le d)
-findExitingEdge Nil d = Nil 
 
 defineVariables :: Declaration -> List Element -> List Element
 defineVariables d le = case d of 
@@ -174,4 +155,3 @@ strRD (A e a b) = let r = "," <> (if a == -1 then "?" else show a) <> "," <> sho
     Var f -> f <> r
     Array f -> f <> r
     Record f -> f <> r
-
