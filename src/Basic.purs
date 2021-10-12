@@ -2,9 +2,9 @@ module Basic where
 
 
 import Data.List (List(..), (:))
-import AST
-import ProgramGraph
-import Prelude (show, bind, pure, show, ($), (+), (-), (<>), (<), (==), negate, (&&))
+import AST (AExp(..), BExp(..), Declaration(..), LExp(..), Opa(..), Opb(..), Opr(..), Statement(..))
+import ProgramGraph (Content(..), Edge(..))
+import Prelude ((&&), (==))
 
 
 mergeListList :: List (List Edge) -> List (List Edge) -> List (List Edge)
@@ -29,6 +29,10 @@ eqListEdge (E a1 b1 c1:as) (E a2 b2 c2:bs) = if ((a1==a2) && (eqContent b1 b2) &
   else false
 eqListEdge Nil Nil = true
 eqListEdge _ _ = false 
+
+
+eqEdge :: Edge -> Edge -> Boolean
+eqEdge (E a1 b1 c1) (E a2 b2 c2) = (a1==a2) && (eqContent b1 b2) && c1 == c2
 
 
 eqContent :: Content -> Content -> Boolean

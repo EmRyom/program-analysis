@@ -1,27 +1,23 @@
 module ProgramGraph where 
 
 import AST (BExp(..), Declaration(..), Program(..), Statement(..))
-import Generator (return, showBExp, showDeclaration, showPosition, showStatement)
-import Data.Either (Either(..))
+import Generator (return, showBExp, showDeclaration, showStatement)
 import Data.List (List(..), singleton, (:))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Prelude (show, ($), (+), (<>), (<), (==),(||))
-import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
 
-pgGenerate :: Either ParseError Program -> String
-pgGenerate (Left err) =
-  let message = parseErrorMessage err in
-  let pos = showPosition $ parseErrorPosition err in
-  "Error: " <> message <> " at " <> pos
-pgGenerate (Right p) = initPG $ pgProgram p
+pgGenerate :: Program -> String
+pgGenerate p = initPG $ pgProgram p
 
 edgesConcat :: (List Edge) -> (List Edge) -> (List Edge)
 edgesConcat (Nil) b = b
 edgesConcat (a:as) (b) = edgesConcat (as) (a:b)
 
 initPG :: (List Edge) -> String 
-initPG a = """digraph program_graph {rankdir=TB;
+initPG a = """/* Paste this into dreampuf.github.io/GraphvizOnline */
+
+digraph program_graph {rankdir=TB;
 node [shape = circle]
 """ <> toPG a <> """}
 """
@@ -61,8 +57,8 @@ pgStatement lastNode s = case s of
         (i /\ (edgesConcat (trueEdge:les) (singleton falseEdge)))
   Ifelse a b1 b2 -> let trueEdge = E lastNode (B a) (lastNode+1) in 
     case pgStatement (lastNode+1) b1 of 
-      (i /\ les) -> let falseEdge = E lastNode (B $ Negation a) (i+1) in
-        case pgStatement (i+1) b2 of 
+      (i /\ les) -> let falseEdge = E lastNode (B $ Negation a) (i) in
+        case pgStatement (i) b2 of 
           (f /\ les2) -> let redded = redirect les i f in 
             f /\ (edgesConcat (trueEdge:redded) (falseEdge:les2))
   While a b -> let trueEdge = E lastNode (B a) (lastNode+1) in 

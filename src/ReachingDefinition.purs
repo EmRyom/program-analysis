@@ -1,35 +1,21 @@
 module ReachingDefinition where
 
-import AST
-import Data.Maybe
-import Generator
-import ProgramGraph
+import AST (Declaration(..), LExp(..), Program(..), Statement(..))
+import ProgramGraph (Content(..), Edge(..), pgProgram)
 import AllTraversals (initAllTraversals)
-import Data.Either (Either(..))
-import Data.List (List(..), (:), concat, head, last, length, singleton, null, sortBy, uncons, unsnoc, nubBy, reverse)
-import Data.Tuple (Tuple)
-import Data.Tuple.Nested ((/\))
-import Prelude (show, bind, pure, show, (&&), ($), (+), (-), (<>), (<), (==), negate)
-import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
+import Data.List (List(..), concat, nubBy, singleton, (:))
+import Prelude (negate, show, ($), (&&), (+), (<>), (==))
 
-rdGenerate :: Either ParseError Program -> String
-rdGenerate (Left err) =
-  let message = parseErrorMessage err in
-  let pos = showPosition $ parseErrorPosition err in
-  "Error: " <> message <> " at " <> pos
-rdGenerate (Right p) = let edges = pgProgram p in case p of 
-  Program d s -> """/*
-""" <> printReachingDefinitions (initRD edges (defineVariables d Nil)) <> """*/
-""" <> initPG edges 
+rdGenerate :: Program -> String
+rdGenerate p = let edges = pgProgram p in case p of 
+  Program d s -> printReachingDefinitions (initRD edges (defineVariables d Nil))
 
 
 initRD :: List Edge -> List Element -> List ReachingDefinition
 initRD edges elements = 
   let firstRD = unknownDefinition elements 0 in
-  let allT = initAllTraversals edges in 
-  case allT of 
-    (a:as) -> assemble (firstRD:concat (recRD (a:as) firstRD)) 0 
-    Nil -> Nil
+  let allT = initAllTraversals edges in
+  assemble (firstRD:concat (recRD (initAllTraversals edges) firstRD)) 0 
 
 assemble :: List ReachingDefinition -> Int -> List ReachingDefinition
 assemble as i =
@@ -59,51 +45,6 @@ reachingDefinition (a:as) b =
   (newRD:reachingDefinition as newRD)
 reachingDefinition Nil _ = Nil
 
-{-
-
-reachingDefinition :: List Edge -> ReachingDefinition -> List Edge -> List Edge -> List ReachingDefinition
-reachingDefinition edges firstRD lastRun avoid = if eqListEdge edges avoid then 
-  
-  else 
-  case run edges firstRD avoid of 
-    (a /\ b) -> case lastRun of 
-      (c /\ d) -> if eqListEdge b d then
-        case last b of 
-          Just e -> reachingDefinition edges firstRD b (e:avoid)
-          Nothing -> reachingDefinition edges firstRD b (avoid)
-        else reachingDefinition edges firstRD b (avoid)
-
-
-mergeRD :: List ReachingDefinition -> List ReachingDefinition -> List ReachingDefinition
-mergeRD (a:as) b = mergeRD as (a:b)
-mergeRD Nil b = b
-
-firstRun :: List Edge -> ReachingDefinition -> Tuple (List ReachingDefinition) (List Edge)
-firstRun cs (RD i as) = case findEdge cs i of 
-  Nothing -> Nil /\ Nil 
-  Just c -> let newRD = solveConstraint (RD i as) c in
-    mergeTuples ((singleton newRD) /\ (singleton c)) (firstRun cs newRD)
-
-mergeTuples :: Tuple (List ReachingDefinition) (List Edge) -> Tuple (List ReachingDefinition) (List Edge) -> Tuple (List ReachingDefinition) (List Edge)
-mergeTuples ((a:as) /\ (b:bs)) ((cs) /\ (ds)) = mergeTuples ((as) /\ (bs)) ((a:cs) /\ (b:ds))
-mergeTuples ((Nil) /\ (b:bs)) ((cs) /\ (ds)) = (cs) /\ (ds)
-mergeTuples ((a) /\ (Nil)) ((cs) /\ (ds)) = (cs) /\ (ds)
-
-
-run :: List Edge -> ReachingDefinition -> List Edge -> Tuple (List ReachingDefinition) (List Edge)
-run cs (RD i as) disc = case findConsDisc cs i disc of 
-  Nothing -> Nil /\ Nil 
-  Just c -> let newRD = solveConstraint (RD i as) c in 
-    mergeTuples ((singleton newRD) /\ (singleton c)) (run cs newRD (c:disc))
-
-
-
-eqRD :: ReachingDefinition -> ReachingDefinition -> Boolean
-eqRD (RD i as) (RD a is) = eqListAssignment as is && a == i
-eqRD _ _ = false
-
-eqListAssignment :: List Assignment -> List Assignment -> Boolean
-eqListAssignment ()-}
 
 eqAssignment :: Assignment -> Assignment -> Boolean 
 eqAssignment (A a b c) (A d e f) = eqElement a d && b == e && c == f
@@ -127,22 +68,6 @@ eqElement (Array a) (Array b) = a == b
 eqElement (Record a) (Record b) = a == b
 eqElement _ _ = false 
 
-findEdges :: List Edge -> Int -> List Edge
-findEdges (E out c inn:edges) i = 
-  if out == i then (E out c inn:findEdges edges i)
-  else findEdges edges i
-findEdges Nil _ = Nil 
-
-findEdge :: List Edge -> Int -> Maybe Edge
-findEdge (E out c inn:edges) i = 
-  if out == i then Just (E out c inn)
-  else findEdge edges i
-findEdge Nil _ = Nothing  
-
-makeEmptyRD :: Int -> List ReachingDefinition
-makeEmptyRD 0 = Nil
-makeEmptyRD a = (RD a Nil: makeEmptyRD (a-1)) 
-  
 solveConstraint :: ReachingDefinition -> Edge -> ReachingDefinition
 solveConstraint (RD i a) edge = 
   case constraint edge of 

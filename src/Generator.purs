@@ -1,39 +1,25 @@
 module Generator where
 
 import AST
+import Prelude (show, (<>))
 
-import Data.Either (Either(..))
-import Prelude (show, ($), (<>))
-import Text.Parsing.Parser (ParseError, parseErrorMessage, parseErrorPosition)
-import Text.Parsing.Parser.Pos (Position(..))
-
-showPosition :: Position -> String
-showPosition (Position pos) = "line " <> show pos.line <> " column " <> show pos.column
-
-generate :: Either ParseError Program -> String
-generate (Left err) =
-  let message = parseErrorMessage err in
-  let pos = showPosition $ parseErrorPosition err in
-  "Error: " <> message <> " at " <> pos
-generate (Right p) = showProgram p
+generate :: Program -> String
+generate (Program d s) = showDeclaration d <> showStatement s
 
 return :: String 
-return ="""
+return = """
 """
-  
-showProgram :: Program -> String 
-showProgram (Program d s) = showDeclaration d <> showStatement s
 
 showStatement :: Statement -> String
 showStatement x = case x of 
   LDef a b ->  showLExp a <> ":=" <> showAExp b <> ";" 
   RDef a b c ->  a <> ":=(" <> showAExp b <> "," <> showAExp c <> ");" 
-  If a b -> "if (" <> showBExp a <> ") then {" <> showStatement b <> "}"
-  Ifelse a b c -> "if (" <> showBExp a <> ") then {" <> showStatement b <> "} else {" <> showStatement c <> "}" 
-  While a b -> "while (" <> showBExp a <> ") {" <> showStatement b <> "}" 
-  SDouble a b -> showStatement a <> return <> showStatement b <> return 
-  Read a -> "read " <> showLExp a <> ";"
-  Write a -> "write " <> showAExp a <> ";"
+  If a b -> "if (" <> showBExp a <> ") then {" <>  return <> showStatement b <> return <> "}" 
+  Ifelse a b c -> "if (" <> showBExp a <> ") then {" <>  return <> showStatement b <> return <> "} else {" <> return <> showStatement c <> return <> "}" 
+  While a b -> "while (" <> showBExp a <> ") {" <> return <> showStatement b <> return <> "}"  
+  SDouble a b -> showStatement a <> return <> showStatement b 
+  Read a -> "read " <> showLExp a <> ";"  
+  Write a -> "write " <> showAExp a <> ";" 
 
 showLExp :: LExp -> String
 showLExp x = case x of 
@@ -64,8 +50,8 @@ showDeclaration x = case x of
   DVar a -> "int " <> a <> ";"
   DArray a b ->  "int[" <> show b <> "] " <> a <> ";"
   DRecord a -> "{int fst; int snd} " <> a <> ";" 
-  DDouble a b -> showDeclaration a <> return <> showDeclaration b <> return 
-  None -> "e" 
+  DDouble a b -> showDeclaration a <> return <> showDeclaration b 
+  None -> return 
 
 showOpa :: Opa -> String 
 showOpa x = case x of 

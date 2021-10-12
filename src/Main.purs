@@ -1,23 +1,33 @@
 module Main where
 
+import Data.Either (Either(..))
+import Generator (generate)
 import Prelude
 
-import AllTraversals (allTraversals)
+import AllTraversals (allTraversals, recursionLimit)
 import Concur.Core (Widget)
 import Concur.React (HTML)
 import Concur.React.DOM as D
 import Concur.React.Props as P
 import Concur.React.Run (runWidgetInDom)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Generator (generate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
 import ReachingDefinition (rdGenerate)
+import Text.Parsing.Parser (parseErrorMessage, parseErrorPosition)
+import Text.Parsing.Parser.Pos (Position(..))
 
 type InputState = {currentText :: String}
 
 initProof :: String
 initProof = """
+/* 1: Reaching Definitions 
+   2: Program Graph
+   3: All possible traversals (recursion depth: """ <> show recursionLimit <> """)
+
+Choice :*/ 1
+
 {
 int x;
 int y;
@@ -54,9 +64,19 @@ initState :: InputState
 initState = {currentText: initProof}
 
 showState :: InputState -> String
-showState s = rdGenerate $ parse s.currentText
+showState s = case parse s.currentText of 
+  Right (i /\ p) -> case i of 
+    1 -> rdGenerate p
+    2 -> pgGenerate p
+    3 -> allTraversals p 
+    _ -> generate p
+  Left e -> 
+    let message = parseErrorMessage e in
+    let pos = showPosition $ parseErrorPosition e in
+    "Error: " <> message <> " at " <> pos
 
-
+showPosition :: Position -> String
+showPosition (Position pos) = "line " <> show pos.line <> " column " <> show pos.column
 
 
 inputWidget :: InputState -> Widget HTML InputState

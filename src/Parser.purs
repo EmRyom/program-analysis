@@ -1,14 +1,16 @@
 module Parser where
 
 
-import AST 
+import AST (AExp(..), BExp(..), Declaration(..), LExp(..), Opa(..), Opb(..), Opr(..), Program(..), Statement(..)) 
 import Control.Lazy (fix)
 import Data.Either (Either)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import Data.List (List(..), many, (:))
 import Lexer (token)
 import Prelude (bind, discard, pure, ($), (*>), (<*))
-import Text.Parsing.Parser (Parser, ParseError, runParser, position)
-import Text.Parsing.Parser.Combinators (choice, option, optionMaybe, sepBy, try, (<?>))
+import Text.Parsing.Parser (ParseError, Parser, runParser)
+import Text.Parsing.Parser.Combinators (choice, (<?>))
 import Text.Parsing.Parser.String (eof)
 
 type SParser a = Parser String a
@@ -330,6 +332,13 @@ program = do
   s <- statements
   pure $ Program (list2tree2 d) s
 
-parse :: String -> Either ParseError Program
-parse input = runParser input (token.whiteSpace *> token.braces program <* eof)
+
+selection :: SParser (Tuple Int Program)
+selection = do 
+  a <- token.integer
+  b <- token.braces program
+  pure $ (a /\ b)
+
+parse :: String -> Either ParseError (Tuple Int Program)
+parse input = runParser input (token.whiteSpace *> selection <* eof)
 
