@@ -1,7 +1,5 @@
 module Main where
 
-import Data.Either (Either(..))
-import Generator (generate)
 import Prelude
 
 import AllTraversals (allTraversals, recursionLimit)
@@ -10,8 +8,11 @@ import Concur.React (HTML)
 import Concur.React.DOM as D
 import Concur.React.Props as P
 import Concur.React.Run (runWidgetInDom)
+import Data.Either (Either(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Executor (execute)
+import Generator (generate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
 import ReachingDefinition (rdGenerate)
@@ -25,6 +26,8 @@ initProof = """
 /* 1: Reaching Definitions 
    2: Program Graph
    3: All possible traversals (recursion depth: """ <> show recursionLimit <> """)
+   4: Run program (variables only)
+   5: Print AST
 
 Choice :*/ 1
 
@@ -58,6 +61,21 @@ while (a!=b) {
 }
 write a;
 """
+{
+int x;
+int y;
+x := 1;
+y := 1000000000;
+while (y>=1) {
+  while (x > 0) {
+    x := (x+y);
+  }
+  while (x < 0) {
+    x := (x-y);
+  }
+  y := (y / 10);
+}
+}
 -}
 
 initState :: InputState
@@ -68,7 +86,8 @@ showState s = case parse s.currentText of
   Right (i /\ p) -> case i of 
     1 -> rdGenerate p
     2 -> pgGenerate p
-    3 -> allTraversals p 
+    3 -> allTraversals p
+    4 -> execute p 
     _ -> generate p
   Left e -> 
     let message = parseErrorMessage e in

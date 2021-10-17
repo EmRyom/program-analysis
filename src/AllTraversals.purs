@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Ordering (Ordering(..))
 import Generator (showBExp, showDeclaration, showStatement)
 import ProgramGraph (Content(..), Edge(..), pgProgram)
-import Data.List (List(..), length, reverse, singleton, sortBy, (:))
+import Data.List (List(..), length, last, reverse, singleton, sortBy, (:))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Prelude (Ordering, show, ($), (&&), (+), (<), (<>), (==))
@@ -15,13 +15,19 @@ import Prelude (Ordering, show, ($), (&&), (+), (<), (<>), (==))
 allTraversals :: Program -> String
 allTraversals p = let edges = pgProgram p in case p of 
   Program d s -> printListList (sortBy l (initAllTraversals edges))
+  
+  
+  {-case (sortBy l (initAllTraversals edges)) of 
+    (a:as) -> show $ length a
+    Nil -> show 0-}
+  
 
 recursionLimit :: Int
 recursionLimit = 2
 
 l :: List Edge -> List Edge -> Ordering
 l a b = if length a == length b then EQ else 
-  if length a < length b then LT else GT
+  if length a < length b then GT else LT
 
 findInitEdge :: List Edge -> Maybe Edge 
 findInitEdge (E a b c:es) = if a == 0 then Just (E a b c) else findInitEdge es
