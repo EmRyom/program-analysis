@@ -8,11 +8,13 @@ import Concur.React (HTML)
 import Concur.React.DOM as D
 import Concur.React.Props as P
 import Concur.React.Run (runWidgetInDom)
+import DangerousVariables (dvGenerate)
 import Data.Either (Either(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Executor (execute)
 import Generator (generate)
+import LiveVariables (lvGenerate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
 import ReachingDefinition (rdGenerate)
@@ -27,7 +29,9 @@ initProof = """
    2: Program Graph
    3: All possible traversals (recursion depth: """ <> show recursionLimit <> """)
    4: Run program (variables only)
-   5: Print AST
+   5: Dangerous Variables
+   6: Live Variables
+   7: Print AST
 
 Choice :*/ 1
 
@@ -88,7 +92,10 @@ showState s = case parse s.currentText of
     2 -> pgGenerate p
     3 -> allTraversals p
     4 -> execute p 
+    5 -> dvGenerate p 
+    6 -> lvGenerate p
     _ -> generate p
+
   Left e -> 
     let message = parseErrorMessage e in
     let pos = showPosition $ parseErrorPosition e in

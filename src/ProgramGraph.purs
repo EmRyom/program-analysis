@@ -8,7 +8,14 @@ import Data.Tuple.Nested ((/\))
 import Prelude (show, ($), (+), (<>), (<), (==),(||))
 
 pgGenerate :: Program -> String
-pgGenerate p = initPG $ pgProgram p
+pgGenerate p = let edges = pgProgram p in """/*
+""" <> printList edges <> """
+Paste this into dreampuf.github.io/GraphvizOnline */
+
+digraph program_graph {rankdir=TB;
+node [shape = circle]
+""" <> toPG edges <> """}
+"""
 
 edgesConcat :: (List Edge) -> (List Edge) -> (List Edge)
 edgesConcat (Nil) b = b
@@ -32,6 +39,14 @@ toPG _ = ""
 makeEdge :: String -> Int -> Int -> String
 makeEdge a b c = "q" <> show b <> " -> q" <> show c <> " [label = \"" <> a <> "\"];" <> return 
 
+printList :: List Edge -> String 
+printList (E a (B b) c:as) = "(q" <> show a <> ", " <> showBExp b <> ", q" <> show c <> """)
+""" <> printList as
+printList (E a (S s) c:as) = "(q" <> show a <> ", " <> showStatement s <> ", q" <> show c <> """)
+""" <> printList as
+printList (E a (D d) c:as) = "(q" <> show a <> ", " <> showDeclaration d <> ", q" <> show c <> """)
+""" <> printList as
+printList _ = ""
 
 pgProgram :: Program -> (List Edge)
 pgProgram (Program d s) = case pgDeclaration 0 d of 

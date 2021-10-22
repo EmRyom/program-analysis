@@ -1,6 +1,6 @@
 module ReachingDefinition where
 
-import AST (Declaration(..), LExp(..), Program(..), Statement(..))
+import AST
 import ProgramGraph (Content(..), Edge(..), pgProgram)
 import AllTraversals (initAllTraversals)
 import Data.List (List(..), concat, nubBy, singleton, (:))
@@ -8,13 +8,13 @@ import Prelude (negate, show, ($), (&&), (+), (<>), (==))
 
 rdGenerate :: Program -> String
 rdGenerate p = let edges = pgProgram p in case p of 
-  Program d s -> printReachingDefinitions (initRD edges (defineVariables d Nil))
+  Program d s -> let els = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesAssignment s) in
+    printReachingDefinitions (initRD edges els)
 
 
 initRD :: List Edge -> List Element -> List ReachingDefinition
 initRD edges elements = 
   let firstRD = unknownDefinition elements 0 in
-  let allT = initAllTraversals edges in
   assemble (firstRD:concat (recRD (initAllTraversals edges) firstRD)) 0 
 
 assemble :: List ReachingDefinition -> Int -> List ReachingDefinition
@@ -136,20 +136,81 @@ data Killset
   | NoKill
 
 
+mergeElement :: List Element -> List Element -> List Element
+mergeElement (a:as) b = mergeElement as (a:b)
+mergeElement Nil b = b
+
 defineVariables :: Declaration -> List Element -> List Element
 defineVariables d le = case d of 
-  DVar s -> replaceElement (Var s) le 
-  DArray s i -> replaceElement (Array s) le 
-  DRecord s -> replaceElement (Record s) le  
+  DVar s -> replaceElementName (Var s) le 
+  DArray s i -> replaceElementName (Array s) le 
+  DRecord s -> replaceElementName (Record s) le  
   None -> le 
   DDouble d1 d2 -> defineVariables d2 $ defineVariables d1 le 
 
+defineVariablesAssignment :: Statement -> List Element 
+defineVariablesAssignment s = case s of 
+  LDef a b -> case a of
+    LVar o -> (Var o:Nil)
+    LArray o _ -> (Array o:Nil)
+    LRfst o -> (Record o:Nil)
+    LRsnd o -> (Record o:Nil)
+  RDef a _ _ -> (Record a:Nil)
+  SDouble a b -> mergeElement (defineVariablesAssignment a) (defineVariablesAssignment b) 
+  If a b -> (defineVariablesAssignment b)
+  Ifelse a b c -> mergeElement (defineVariablesAssignment b) (defineVariablesAssignment c)
+  While a b -> (defineVariablesAssignment b)
+  Read a -> case a of
+    LVar o -> (Var o:Nil)
+    LArray o _ -> (Array o:Nil)
+    LRfst o -> (Record o:Nil)
+    LRsnd o -> (Record o:Nil)
+  Write a -> Nil
+
+defineVariablesStatement :: Statement -> List Element 
+defineVariablesStatement s = case s of 
+  LDef a b -> mergeElement (fvLExp a) (fvAExp b) 
+  RDef a b c -> mergeElement (Record a:fvAExp b) $ fvAExp c
+  SDouble a b -> mergeElement (defineVariablesStatement a) (defineVariablesStatement b) 
+  If a b -> mergeElement (defineVariablesStatement b) (fvBExp a)
+  Ifelse a b c -> mergeElement (defineVariablesStatement b) (mergeElement (fvBExp a) (defineVariablesStatement c))
+  While a b -> mergeElement (defineVariablesStatement b) (fvBExp a)
+  Read a -> fvLExp a
+  Write a -> fvAExp a 
+
 replaceElement :: Element -> List Element -> List Element
 replaceElement e (a:as) =
-  if name a == name e 
+  if eqElement a e 
   then replaceElement e as
   else (a:replaceElement e as)
 replaceElement e Nil = singleton e 
+
+fvAExp :: AExp -> List Element 
+fvAExp (AArray x b) = (Array x:fvAExp b)
+fvAExp (ARfst x) = singleton (Record x)
+fvAExp (ARsnd x) = singleton (Record x)
+fvAExp (Arithmetic a _ c) = concat (fvAExp a:(singleton $ fvAExp c))
+fvAExp (AVar x) = singleton (Var x)
+fvAExp (ANumber x) = Nil
+
+fvBExp :: BExp -> List Element
+fvBExp (Relational a _ c) = concat (fvAExp a:singleton (fvAExp c))
+fvBExp (Boolean a _ c) = concat (fvBExp a:singleton (fvBExp c))
+fvBExp (Negation a) = fvBExp a 
+fvBExp _ = Nil 
+
+fvLExp :: LExp -> List Element 
+fvLExp (LVar a) = (Var a:Nil)
+fvLExp (LArray a b) = (Array a:fvAExp b)
+fvLExp (LRfst a) = (Record a:Nil)
+fvLExp (LRsnd a) = (Record a:Nil)
+
+replaceElementName :: Element -> List Element -> List Element
+replaceElementName e (a:as) =
+  if name a == name e 
+  then replaceElementName e as
+  else (a:replaceElementName e as)
+replaceElementName e Nil = singleton e 
 
 name :: Element -> String
 name (Var a) = a

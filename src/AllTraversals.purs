@@ -5,9 +5,8 @@ import AST (Program(..))
 import Basic (eqEdge, mergeListList)
 import Data.Maybe (Maybe(..))
 import Data.Ordering (Ordering(..))
-import Generator (showBExp, showDeclaration, showStatement)
-import ProgramGraph (Content(..), Edge(..), pgProgram)
-import Data.List (List(..), length, last, reverse, singleton, sortBy, (:))
+import ProgramGraph (Edge(..), pgProgram, printList)
+import Data.List (List(..), length, reverse, singleton, sortBy, (:))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Prelude (Ordering, show, ($), (&&), (+), (<), (<>), (==))
@@ -15,12 +14,6 @@ import Prelude (Ordering, show, ($), (&&), (+), (<), (<>), (==))
 allTraversals :: Program -> String
 allTraversals p = let edges = pgProgram p in case p of 
   Program d s -> printListList (sortBy l (initAllTraversals edges))
-  
-  
-  {-case (sortBy l (initAllTraversals edges)) of 
-    (a:as) -> show $ length a
-    Nil -> show 0-}
-  
 
 recursionLimit :: Int
 recursionLimit = 2
@@ -48,14 +41,6 @@ printListList (a:as) = "Length:" <> (show $ length (a)) <> """
 """ <> printListList as
 printListList _ = ""
 
-printList :: List Edge -> String 
-printList (E a (B b) c:as) = "(" <> show a <> ", " <> showBExp b <> ", " <> show c <> """)
-""" <> printList as
-printList (E a (S s) c:as) = "(" <> show a <> ", " <> showStatement s <> ", " <> show c <> """)
-""" <> printList as
-printList (E a (D d) c:as) = "(" <> show a <> ", " <> showDeclaration d <> ", " <> show c <> """)
-""" <> printList as
-printList _ = ""
 
 findAllTraversals :: List (Tuple Edge Int) -> List Edge -> List (List Edge)
 findAllTraversals edges (E a b c:avoid) = 
