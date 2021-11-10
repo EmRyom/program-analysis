@@ -22,14 +22,12 @@ l :: List Edge -> List Edge -> Ordering
 l a b = if length a == length b then EQ else 
   if length a < length b then GT else LT
 
-findInitEdge :: List Edge -> Maybe Edge -- NEEDS TO BE A LIST OF EDGES
-findInitEdge (E a b c:es) = if a == 0 then Just (E a b c) else findInitEdge es
-findInitEdge _ = Nothing 
+findInitEdge :: List Edge -> List Edge -- NEEDS TO BE A LIST OF EDGES
+findInitEdge (E a b c:es) = if a == 0 then (E a b c:findInitEdge es) else findInitEdge es
+findInitEdge _ = Nil 
 
 initAllTraversals :: List Edge -> List (List Edge)
-initAllTraversals edges = case findInitEdge edges of 
-    Just (e) -> (findAllTraversals (edgeIncrement (tuplefy edges) e) (singleton e))
-    Nothing -> Nil
+initAllTraversals edges = forAllNewEdges (tuplefy edges) Nil (findInitEdge edges)
 
 tuplefy :: List Edge -> List (Tuple Edge Int) 
 tuplefy (a:as) = ((a /\ 0):tuplefy as)
