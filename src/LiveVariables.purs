@@ -164,12 +164,8 @@ printLiveVariables (LV a b:as) = "LV(q" <> show a <> ")={" <> printLV b <> """}
 printLiveVariables Nil = ""
 
 printLV :: List (Element) -> String 
-printLV (a:as) = "(" <> strLV a <> ")" <> printLV as
+printLV (Var a:as) = "(" <> a <> ")" <> printLV as
+printLV (Record a:as) = "(" <> a <> ")" <> printLV as
+printLV (Array a:as) = "(" <> a <> ")" <> printLV as
 printLV Nil = ""
 
-strLV :: Element -> String 
-strLV e = --let r = "," <> (if a == -1 then "?" else show a) <> "," <> show b in
-  case e of 
-    Var f -> f 
-    Array f -> f
-    Record f -> f

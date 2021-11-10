@@ -70,10 +70,7 @@ removeElement (a:as) d =
   else (a:removeElement as d)
 removeElement Nil _ = Nil 
 
-
-
 data DangerousVariable = DV Int (List Element)
-                          -- Node|Reaching Definition
 
 printDangerousVariables :: List (DangerousVariable) -> String
 printDangerousVariables (DV a b:as) = "DV(q" <> show a <> ")={" <> printDV b <> """}
@@ -86,7 +83,7 @@ printDV (a:as) = strDV a <> "," <> printDV as
 printDV Nil = ""
 
 strDV :: Element -> String 
-strDV e = --let r = "," <> (if a == -1 then "?" else show a) <> "," <> show b in
+strDV e =
   case e of 
     Var f -> f 
     Array f -> f

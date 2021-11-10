@@ -22,7 +22,7 @@ l :: List Edge -> List Edge -> Ordering
 l a b = if length a == length b then EQ else 
   if length a < length b then GT else LT
 
-findInitEdge :: List Edge -> Maybe Edge 
+findInitEdge :: List Edge -> Maybe Edge -- NEEDS TO BE A LIST OF EDGES
 findInitEdge (E a b c:es) = if a == 0 then Just (E a b c) else findInitEdge es
 findInitEdge _ = Nothing 
 

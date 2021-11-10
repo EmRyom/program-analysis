@@ -1,7 +1,7 @@
 module Main where
 
 import Prelude
-
+import Worklist (worklistRun)
 import AllTraversals (allTraversals, recursionLimit)
 import Concur.Core (Widget)
 import Concur.React (HTML)
@@ -33,8 +33,21 @@ initProof = """
    6: Live Variables
    7: Print AST
 
-Choice :*/ 1
+Choice :*/ 7
 
+{
+if (x<=0) {
+  while (x>0) {
+    x:=(x-1);
+  }
+  } else {
+  while (x<0) {
+    x:=(x+1);
+  }
+  }
+}"""
+
+{-
 {
 int x;
 int y;
@@ -50,7 +63,6 @@ write z;
 }
 
 """
-{-
 int a;
 int b;
 read a;
@@ -94,6 +106,7 @@ showState s = case parse s.currentText of
     4 -> execute p 
     5 -> dvGenerate p 
     6 -> lvGenerate p
+    7 -> worklistRun p
     _ -> generate p
 
   Left e -> 
