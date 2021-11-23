@@ -20,11 +20,10 @@ empty = CatNil
 extract :: Worklist -> Maybe (Tuple Int Worklist)
 extract e = uncons e
 
-insertStack :: Worklist -> Int -> Worklist
-insertStack w i = cons i w
+--                           Stack? (Otherwise queue)
+insert :: Worklist -> Int -> Boolean -> Worklist
+insert w i b = if b then cons i w else snoc w i
 
-insertQueue :: Worklist -> Int -> Worklist
-insertQueue w i = snoc w i 
 
 {-
 type WorklistStack = CatList Int
