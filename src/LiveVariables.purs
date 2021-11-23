@@ -2,10 +2,11 @@ module LiveVariables where
 
 
 import AST
-import ProgramGraph (Content(..), Edge(..), pgProgram, highest)
+import ProgramGraph (pgProgram, highest)
 import AllTraversals (initAllTraversals)
 import Data.List (List(..), concat, nubBy, singleton, (:),deleteBy, unionBy)
 import Prelude (negate, show, ($), (&&), (-), (<>), (==))
+import Basic
 
 lvGenerate :: Program -> String
 lvGenerate p = let edges = pgProgram p in case p of 

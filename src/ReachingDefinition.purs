@@ -1,7 +1,8 @@
 module ReachingDefinition where
 
 import AST
-import ProgramGraph (Content(..), Edge(..), pgProgram)
+import ProgramGraph (pgProgram)
+import Basic
 import AllTraversals (initAllTraversals)
 import Data.List (List(..), concat, nubBy, singleton, (:))
 import Prelude (negate, show, ($), (&&), (+), (<>), (==))

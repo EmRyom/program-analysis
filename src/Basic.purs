@@ -3,9 +3,23 @@ module Basic where
 
 import Data.List (List(..), (:))
 import AST (AExp(..), BExp(..), Declaration(..), LExp(..), Opa(..), Opb(..), Opr(..), Statement(..))
-import ProgramGraph (Content(..), Edge(..))
 import Prelude ((&&), (==))
+import Data.Ord 
+import Data.Eq
 
+
+data Edge = E Int Content Int
+
+instance ordEdge :: Ord Edge where
+    compare (E a b c) (E d e f) = if a == d && c == f && eqContent b e then EQ else LT
+
+instance equEdge :: Eq Edge where
+    eq (E a b c) (E d e f) = a == d && c == f && eqContent b e
+
+data Content 
+  = D Declaration
+  | S Statement
+  | B BExp 
 
 mergeListList :: List (List Edge) -> List (List Edge) -> List (List Edge)
 mergeListList (a:as) b = mergeListList as (a:b)

@@ -6,6 +6,7 @@ You can edit this file as you like.
 , name = "secav-unshortener"
 , dependencies =
   [ "arrays"
+  , "catenable-lists"
   , "concur-core"
   , "concur-react"
   , "console"

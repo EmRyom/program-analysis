@@ -5,7 +5,8 @@ import Generator (return, showBExp, showDeclaration, showStatement)
 import Data.List (List(..), singleton, (:))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Prelude (show, ($), (+), (<>), (<), (==),(||))
+import Basic (Content(..), Edge(..))
+import Prelude (show, ($), (+), (<), (<>), (==), (||))
 
 pgGenerate :: Program -> String
 pgGenerate p = let edges = pgProgram p in """/*
@@ -96,12 +97,3 @@ highest ((E h _ g):as) b = if b < g || b < h
   then if g < h then highest as h else highest as g
   else highest as b
 highest Nil b = b
-
-data Edge = E Int Content Int
- 
-data Content 
-  = D Declaration
-  | S Statement
-  | B BExp 
-
-

@@ -6,6 +6,7 @@ import Data.Either
 import Data.Maybe
 import Data.Tuple
 import ProgramGraph
+import Basic
 
 import AllTraversals (edgeIncrement, tuplefy)
 import Data.List (List(..), singleton, (:), deleteBy)

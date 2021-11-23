@@ -1,7 +1,8 @@
 module Main where
 
 import Prelude
-import Worklist (worklistRun)
+import AST
+--import Worklist (worklistRun)
 import AllTraversals (allTraversals, recursionLimit)
 import Concur.Core (Widget)
 import Concur.React (HTML)
@@ -33,7 +34,7 @@ initProof = """
    6: Live Variables
    7: Print AST
 
-Choice :*/ 7
+Choice :*/ 10
 
 {
 if (x<=0) {
@@ -97,17 +98,26 @@ while (y>=1) {
 initState :: InputState
 initState = {currentText: initProof}
 
+astP :: Program 
+astP = Program (
+    DDouble (DVar "x") (
+    DDouble (DVar "y") None)) (
+      SDouble (Read (LVar "x")) (
+      SDouble (Read (LVar "y")) (
+      SDouble (LDef (LVar "x") (Arithmetic (AVar "x") (Multiplication) (AVar "y")))
+      (Write (AVar "x"))))) 
+
 showState :: InputState -> String
 showState s = case parse s.currentText of 
-  Right (i /\ p) -> case i of 
-    1 -> rdGenerate p
-    2 -> pgGenerate p
-    3 -> allTraversals p
-    4 -> execute p 
-    5 -> dvGenerate p 
-    6 -> lvGenerate p
-    7 -> worklistRun p
-    _ -> generate p
+  Right (i /\ p) ->  case i of 
+      1 -> rdGenerate p
+      2 -> pgGenerate p
+      3 -> allTraversals p
+      4 -> execute p 
+      5 -> dvGenerate p 
+      6 -> lvGenerate p
+      --8 -> worklistRun p
+      _ -> generate p
 
   Left e -> 
     let message = parseErrorMessage e in

@@ -1,11 +1,10 @@
 module AllTraversals where 
 
-
 import AST (Program(..))
-import Basic (eqEdge, mergeListList)
-import Data.Maybe (Maybe(..))
+import Basic (Edge(..), mergeListList)
+import Data.Ord (compare)
 import Data.Ordering (Ordering(..))
-import ProgramGraph (Edge(..), pgProgram, printList)
+import ProgramGraph (pgProgram, printList)
 import Data.List (List(..), length, reverse, singleton, sortBy, (:))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
@@ -19,10 +18,9 @@ recursionLimit :: Int
 recursionLimit = 2
 
 l :: List Edge -> List Edge -> Ordering
-l a b = if length a == length b then EQ else 
-  if length a < length b then GT else LT
+l a b = compare (length a) $ length b
 
-findInitEdge :: List Edge -> List Edge -- NEEDS TO BE A LIST OF EDGES
+findInitEdge :: List Edge -> List Edge
 findInitEdge (E a b c:es) = if a == 0 then (E a b c:findInitEdge es) else findInitEdge es
 findInitEdge _ = Nil 
 
@@ -55,7 +53,7 @@ forAllNewEdges edges avoid (newEdge:ns) =
 forAllNewEdges _ _ _ = Nil 
 
 edgeIncrement :: List (Tuple Edge Int) -> Edge -> List (Tuple Edge Int)
-edgeIncrement ((a /\ b):as) c = if eqEdge a c then ((a /\ (b+1)):as) else ((a /\ b):edgeIncrement as c)
+edgeIncrement ((a /\ b):as) c = if a == c then ((a /\ (b+1)):as) else ((a /\ b):edgeIncrement as c)
 edgeIncrement Nil c = Nil
 
 findEdges :: List (Tuple Edge Int) -> Int -> List Edge
