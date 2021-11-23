@@ -12,6 +12,21 @@ import ProgramGraph
 import AST
 import Data.Set (Set(..), empty, singleton, member, insert, findMin, delete, union)
 
+type Worklist = CatList Int 
+
+empty :: Worklist
+empty = CatNil
+
+extract :: Worklist -> Maybe (Tuple Int Worklist)
+extract e = uncons e
+
+insertStack :: Worklist -> Int -> Worklist
+insertStack w i = cons i w
+
+insertQueue :: Worklist -> Int -> Worklist
+insertQueue w i = snoc w i 
+
+{-
 type WorklistStack = CatList Int
 
 emptyStack :: WorklistStack
@@ -32,7 +47,7 @@ extractQueue :: WorklistQueue -> Maybe (Tuple Int WorklistQueue)
 extractQueue e = uncons e
 
 insertQueue :: WorklistQueue -> Int -> WorklistQueue
-insertQueue w i = snoc w i 
+insertQueue w i = snoc w i -}
 
 
 

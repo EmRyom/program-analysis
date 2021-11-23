@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 import AST
---import Worklist (worklistRun)
+import Worklist
 import AllTraversals (allTraversals, recursionLimit)
 import Concur.Core (Widget)
 import Concur.React (HTML)
@@ -109,7 +109,7 @@ astP = Program (
 
 showState :: InputState -> String
 showState s = case parse s.currentText of 
-  Right (i /\ p) ->  case i of 
+  Right (i /\ p) -> case i of 
       1 -> rdGenerate p
       2 -> pgGenerate p
       3 -> allTraversals p
