@@ -25,16 +25,20 @@ import Text.Parsing.Parser.Pos (Position(..))
 type InputState = {currentText :: String}
 
 initProof :: String
-initProof = """
-/* 1: Reaching Definitions 
-   2: Program Graph
-   3: All possible traversals (recursion depth: """ <> show recursionLimit <> """)
-   4: Run program (variables only)
-   5: Dangerous Variables
-   6: Live Variables
-   7: Print AST
+initProof = """/* 
+  1: Program Graph
+On a simple algorithm:
+  2: Reaching Definitions 
+  3: Dangerous Variables
+  4: Live Variables
+On whatever other algorithm:
+  XXXTODO
+Extra:
+  11: All possible traversals (recursion limit: """ <> show recursionLimit <> """)
+  12: Run program (variables only)
+  13: Print program (back from AST)
 
-Choice :*/ 10
+Selection :*/ 1
 
 {
 if (x<=0) {
@@ -110,12 +114,12 @@ astP = Program (
 showState :: InputState -> String
 showState s = case parse s.currentText of 
   Right (i /\ p) -> case i of 
-      1 -> rdGenerate p
-      2 -> pgGenerate p
-      3 -> allTraversals p
-      4 -> execute p 
-      5 -> dvGenerate p 
-      6 -> lvGenerate p
+      1 -> pgGenerate p
+      2 -> rdGenerate p
+      3 -> dvGenerate p 
+      4 -> lvGenerate p
+      11 -> allTraversals p
+      12 -> execute p 
       --8 -> worklistRun p
       _ -> generate p
 

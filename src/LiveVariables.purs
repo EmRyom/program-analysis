@@ -3,14 +3,15 @@ module LiveVariables where
 
 import AST
 import ProgramGraph (pgProgram, highest)
+import ReachingDefinition (defineVariables, defineVariablesStatement, fvAExp, fvBExp, eqElement, Element(..))
 import AllTraversals (initAllTraversals)
-import Data.List (List(..), concat, nubBy, singleton, (:),deleteBy, unionBy)
+import Data.List (List(..), concat, nubBy, singleton, (:), deleteBy, unionBy, reverse)
 import Prelude (negate, show, ($), (&&), (-), (<>), (==))
 import Basic
 
 lvGenerate :: Program -> String
 lvGenerate p = let edges = pgProgram p in case p of 
-  Program d s -> printLiveVariables (initLV edges (defineVariables d Nil))
+  Program d s -> printLiveVariables $ reverse (initLV edges)
 
 
 reverseEdges :: List Edge -> List Edge
@@ -18,13 +19,13 @@ reverseEdges (E a b c:as) = (E c b a:reverseEdges as)
 reverseEdges Nil = Nil 
 
 
-initLV :: List Edge -> List Element -> List LiveVariable
-initLV edges elements = 
+initLV :: List Edge -> List LiveVariable
+initLV edges = 
   let limit = highest edges 0 in 
-  assemble (concat (recLV (initAllTraversals edges) (LV limit elements))) limit
+  assemble (concat (recLV (initAllTraversals edges) (LV limit Nil))) limit
 
 assemble :: List LiveVariable -> Int -> List LiveVariable
-assemble as 0 = Nil 
+assemble as -1 = Nil 
 assemble as i =
   case nubBy eqElement (findLV as i) of
     Nil -> (LV i Nil:assemble as (i-1))
@@ -42,7 +43,7 @@ mergeElement Nil b = b
 
 
 recLV :: List (List Edge) -> LiveVariable -> List (List LiveVariable)
-recLV (a:as) r = (liveVariable (reverseEdges a) r:recLV as r)
+recLV (a:as) r = ((liveVariable (reverse $ reverseEdges a) r):recLV as r)
 recLV Nil r = Nil 
 
 
@@ -51,22 +52,6 @@ liveVariable (a:as) b =
   let newLV = solveConstraint b a in
   (newLV:liveVariable as newLV)
 liveVariable Nil _ = Nil
-
-
-
-
-
-eqKill :: Killset -> Killset -> Boolean
-eqKill (Kill a) (Kill b) = eqElement a b
-eqKill NoKill NoKill = true 
-eqKill _ _ = false
-
-
-eqElement :: Element -> Element -> Boolean
-eqElement (Var a) (Var b) = a == b
-eqElement (Array a) (Array b) = a == b
-eqElement (Record a) (Record b) = a == b
-eqElement _ _ = false 
 
 solveConstraint :: LiveVariable -> Edge -> LiveVariable
 solveConstraint (LV i a) edge = 
@@ -104,33 +89,9 @@ constraint (E x y z) = case y of
   B a -> C x z NoKill $ Gen (fvBExp a) 
 
 
-
-fvAExp :: AExp -> List Element 
-fvAExp (AArray x b) = (Array x:fvAExp b)
-fvAExp (ARfst x) = singleton (Record x)
-fvAExp (ARsnd x) = singleton (Record x)
-fvAExp (Arithmetic a _ c) = concat (fvAExp a:(singleton $ fvAExp c))
-fvAExp (AVar x) = singleton (Var x)
-fvAExp (ANumber x) = Nil
-
-fvBExp :: BExp -> List Element
-fvBExp (Relational a _ c) = concat (fvAExp a:singleton (fvAExp c))
-fvBExp (Boolean a _ c) = concat (fvBExp a:singleton (fvBExp c))
-fvBExp (Negation a) = fvBExp a 
-fvBExp _ = Nil 
-
-    
-
-
-
 data LiveVariable = LV Int (List Element)
-                          -- Node|Reaching Definition
 data Constraint         = C Int Int Killset Genset
                          -- Out|In|Kill|Gen
-data Element 
-  = Var String 
-  | Array String 
-  | Record String 
 data Genset 
   = Gen (List Element)  
   | NoGen
@@ -139,34 +100,18 @@ data Killset
   | NoKill
 
 
-defineVariables :: Declaration -> List Element -> List Element
-defineVariables d le = case d of 
-  DVar s -> replaceElement (Var s) le 
-  DArray s i -> replaceElement (Array s) le 
-  DRecord s -> replaceElement (Record s) le  
-  None -> le 
-  DDouble d1 d2 -> defineVariables d2 $ defineVariables d1 le 
-
-replaceElement :: Element -> List Element -> List Element
-replaceElement e (a:as) =
-  if name a == name e 
-  then replaceElement e as
-  else (a:replaceElement e as)
-replaceElement e Nil = singleton e 
-
-name :: Element -> String
-name (Var a) = a
-name (Array a) = a
-name (Record a) = a
-
 printLiveVariables :: List (LiveVariable) -> String
 printLiveVariables (LV a b:as) = "LV(q" <> show a <> ")={" <> printLV b <> """}
 """ <> printLiveVariables as 
 printLiveVariables Nil = ""
 
 printLV :: List (Element) -> String 
-printLV (Var a:as) = "(" <> a <> ")" <> printLV as
-printLV (Record a:as) = "(" <> a <> ")" <> printLV as
-printLV (Array a:as) = "(" <> a <> ")" <> printLV as
+printLV (a:Nil) = case a of 
+  Var b -> b
+  Record b -> b
+  Array b -> b
+printLV (Var a:as) = a <> "," <> printLV as
+printLV (Record a:as) = a <> "," <> printLV as
+printLV (Array a:as) = a <> "," <> printLV as
 printLV Nil = ""
 

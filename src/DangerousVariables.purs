@@ -22,7 +22,7 @@ initDV edges elements =
   reverse $ assemble (firstDV:concat (recDV (initAllTraversals edges) firstDV)) limit
 
 assemble :: List DangerousVariable -> Int -> List DangerousVariable
-assemble as 0 = Nil 
+assemble as -1 = Nil 
 assemble as i =
   case nubBy eqElement (findDV as i) of
     Nil -> (DV i Nil:assemble as (i-1))

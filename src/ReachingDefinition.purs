@@ -9,7 +9,7 @@ import Prelude (negate, show, ($), (&&), (+), (<>), (==))
 
 rdGenerate :: Program -> String
 rdGenerate p = let edges = pgProgram p in case p of 
-  Program d s -> let els = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesAssignment s) in
+  Program d s -> let els = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in
     printReachingDefinitions (initRD edges els)
 
 
