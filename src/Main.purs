@@ -18,6 +18,7 @@ import Generator (generate)
 import LiveVariables (lvGenerate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
+import FaintVariables (fvGenerate)
 import ReachingDefinition (rdGenerate)
 import Text.Parsing.Parser (parseErrorMessage, parseErrorPosition)
 import Text.Parsing.Parser.Pos (Position(..))
@@ -31,8 +32,9 @@ On a simple algorithm:
   2: Reaching Definitions 
   3: Dangerous Variables
   4: Live Variables
-On whatever other algorithm:
-  XXXTODO
+  5: Faint Variables
+On the worklist algorithm:
+  6: RD
 Extra:
   11: All possible traversals (recursion limit: """ <> show recursionLimit <> """)
   12: Run program (variables only)
@@ -118,9 +120,10 @@ showState s = case parse s.currentText of
       2 -> rdGenerate p
       3 -> dvGenerate p 
       4 -> lvGenerate p
+      5 -> fvGenerate p 
+      6 -> rdWorklist p
       11 -> allTraversals p
       12 -> execute p 
-      --8 -> worklistRun p
       _ -> generate p
 
   Left e -> 

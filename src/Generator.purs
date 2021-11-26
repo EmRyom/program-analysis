@@ -14,8 +14,8 @@ showStatement :: Statement -> String
 showStatement x = case x of 
   LDef a b ->  showLExp a <> ":=" <> showAExp b <> ";" 
   RDef a b c ->  a <> ":=(" <> showAExp b <> "," <> showAExp c <> ");" 
-  If a b -> "if (" <> showBExp a <> ") then {" <>  return <> showStatement b <> return <> "}" 
-  Ifelse a b c -> "if (" <> showBExp a <> ") then {" <>  return <> showStatement b <> return <> "} else {" <> return <> showStatement c <> return <> "}" 
+  If a b -> "if (" <> showBExp a <> ") {" <>  return <> showStatement b <> return <> "}" 
+  Ifelse a b c -> "if (" <> showBExp a <> ") {" <>  return <> showStatement b <> return <> "} else {" <> return <> showStatement c <> return <> "}" 
   While a b -> "while (" <> showBExp a <> ") {" <> return <> showStatement b <> return <> "}"  
   SDouble a b -> showStatement a <> return <> showStatement b 
   Read a -> "read " <> showLExp a <> ";"  
