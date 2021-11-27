@@ -1,9 +1,9 @@
 module DangerousVariables where
 
 import AST (LExp(..), Program(..), Statement(..))
-import ReachingDefinition (Element(..), defineVariables, defineVariablesStatement, eqElement, fvAExp, mergeElement, name, replaceElement) 
+import ReachingDefinition (defineVariables, defineVariablesStatement, fvAExp, mergeElement, replaceElement) 
 import ProgramGraph (highest, pgProgram) 
-import Basic
+import Basic (Element(..), eqElement, name, Edge(..), Content(..))
 import AllTraversals (initAllTraversals)
 import Data.List (List(..), concat, intersectBy, nubBy, null, reverse, (:))
 import Prelude (show, ($), (-), (<>), (==))

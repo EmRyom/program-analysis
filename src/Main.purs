@@ -1,9 +1,12 @@
 module Main where
 
+import SignAnalysis (saGenerate)
 import Prelude
 import AST
 import Worklist
 import AllTraversals (allTraversals, recursionLimit)
+
+import Basic
 import Concur.Core (Widget)
 import Concur.React (HTML)
 import Concur.React.DOM as D
@@ -14,7 +17,7 @@ import Data.Either (Either(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Executor (execute)
-import Generator (generate)
+import Generator (printSignParsing, generate)
 import LiveVariables (lvGenerate)
 import Parser (parse)
 import ProgramGraph (pgGenerate)
@@ -29,12 +32,12 @@ initProof :: String
 initProof = """/* 
   1: Program Graph
 On a simple algorithm:
-  2: Reaching Definitions 
-  3: Dangerous Variables
-  4: Live Variables
-  5: Faint Variables
+  2: Reaching Definitions   3: Dangerous Variables   4: Live Variables  
+  5: Faint Variables        6: Detection of Signs
 On the worklist algorithm:
-  6: RD
+                            Using a stack    Using reverse post-order 
+  Reaching Definitions      7                9 
+  Detection of Signs        8                10
 Extra:
   11: All possible traversals (recursion limit: """ <> show recursionLimit <> """)
   12: Run program (variables only)
@@ -115,16 +118,17 @@ astP = Program (
 
 showState :: InputState -> String
 showState s = case parse s.currentText of 
-  Right (i /\ p) -> case i of 
+  Right (u /\ (i /\ p)) -> case i of 
       1 -> pgGenerate p
       2 -> rdGenerate p
       3 -> dvGenerate p 
       4 -> lvGenerate p
       5 -> fvGenerate p 
-      6 -> rdWorklist p
+      6 -> saGenerate p u
+      7 -> rdWorklist p
       11 -> allTraversals p
       12 -> execute p 
-      _ -> generate p
+      _ -> printSignParsing u <> generate p
 
   Left e -> 
     let message = parseErrorMessage e in
@@ -152,3 +156,4 @@ secavWidget = go initState
 
 main :: Effect Unit
 main = runWidgetInDom "root" secavWidget
+

@@ -12,7 +12,7 @@ import ProgramGraph
 import AST
 import Data.List (List(..), (:), nubBy, concat)
 import Data.Set (Set(..), empty, singleton, member, findMin, delete, union)
-import ReachingDefinition
+import ReachingDefinition (Assignment(..), ReachingDefinition(..), mergeElement, eqAssignment, printReachingDefinitions, mergeAssignment, solveConstraint, unknownDefinition, defineVariables, defineVariablesStatement)
 
 type Worklist = CatList Int 
 

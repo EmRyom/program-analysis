@@ -3,11 +3,12 @@ module LiveVariables where
 
 import AST
 import ProgramGraph (pgProgram, highest)
-import ReachingDefinition (defineVariables, defineVariablesStatement, fvAExp, fvBExp, eqElement, Element(..))
+import ReachingDefinition (defineVariables, defineVariablesStatement, fvAExp, fvBExp)
 import AllTraversals (initAllTraversals)
 import Data.List (List(..), concat, nubBy, singleton, (:), deleteBy, unionBy, reverse)
 import Prelude (negate, show, ($), (&&), (-), (<>), (==))
-import Basic
+import Basic (Element(..), eqElement, Edge(..), Content(..))
+
 
 lvGenerate :: Program -> String
 lvGenerate p = let edges = pgProgram p in case p of 

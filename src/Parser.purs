@@ -2,6 +2,7 @@ module Parser where
 
 
 import AST (AExp(..), BExp(..), Declaration(..), LExp(..), Opa(..), Opb(..), Opr(..), Program(..), Statement(..)) 
+import Basic (Sign(..), SignInitialisation)
 import Control.Lazy (fix)
 import Data.Either (Either)
 import Data.Tuple (Tuple)
@@ -333,12 +334,87 @@ program = do
   pure $ Program (list2tree2 d) s
 
 
-selection :: SParser (Tuple Int Program)
+selection :: SParser (Tuple SignInitialisation (Tuple Int Program))
 selection = do 
+  c <- signs 
   a <- token.integer
   b <- token.braces program
-  pure $ (a /\ b)
+  pure $ (c /\ (a /\ b))
 
-parse :: String -> Either ParseError (Tuple Int Program)
+
+
+signs :: SParser (List (Tuple String (List Sign)))
+signs = fix possibilities
+  where 
+    possibilities _ = choice
+      [ (do
+        a <- singlesign
+        b <- signsmultiple
+        pure (a:b))
+      , (do
+        token.whiteSpace
+        pure Nil)
+      ] <?> "some signs"
+
+
+
+signsmultiple :: SParser (List (Tuple String (List Sign)))
+signsmultiple = fix allSigns
+  where 
+    allSigns _ = choice
+      [ (do
+        token.reservedOp ","
+        a <- signs 
+        pure a 
+        )
+      , (do
+        token.whiteSpace
+        pure Nil)
+      ] <?> "some signs"
+  
+singlesign :: SParser (Tuple String (List Sign))
+singlesign = do 
+  a <- token.identifier
+  token.reservedOp "="
+  b <- token.braces sign1
+  pure (a /\ b)
+
+sign1 :: SParser (List Sign)
+sign1 = do
+  a <- signNOP
+  b <- sign
+  pure (a:b)
+  
+sign :: SParser (List Sign)
+sign = fix allSign
+  where 
+    allSign _ = choice 
+      [ 
+        (do
+        token.reservedOp ","
+        a <- sign1
+        pure a)
+      , (pure Nil)
+      ] <?> "a sign"
+
+signNOP :: SParser Sign
+signNOP = fix allSignNOP
+  where
+    allSignNOP _ = choice
+      [ 
+        (do
+        token.reservedOp "-"
+        pure Negative) 
+      , (do
+        token.reservedOp "0"
+        pure Neutral )
+      , (do
+        token.reservedOp "+"
+        pure Positive)
+      ] <?> "a sign"
+
+
+
+parse :: String -> Either ParseError (Tuple SignInitialisation (Tuple Int Program))
 parse input = runParser input (token.whiteSpace *> selection <* eof)
 

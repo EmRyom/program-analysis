@@ -6,6 +6,23 @@ import AST (AExp(..), BExp(..), Declaration(..), LExp(..), Opa(..), Opb(..), Opr
 import Prelude ((&&), (==))
 import Data.Ord 
 import Data.Eq
+import Data.Tuple 
+import Data.Tuple.Nested ((/\))
+
+
+type SignInitialisation = List (Tuple String (List Sign))
+data Sign 
+  = Negative
+  | Neutral
+  | Positive 
+
+instance eqSign :: Eq Sign where
+  eq a b = case (a /\ b) of
+    (Negative /\ Negative) -> true 
+    (Neutral /\ Neutral) -> true 
+    (Positive /\ Positive) -> true 
+    (_ /\ _) -> false
+
 
 
 data Edge = E Int Content Int
@@ -20,6 +37,22 @@ data Content
   = D Declaration
   | S Statement
   | B BExp 
+
+name :: Element -> String
+name (Var a) = a
+name (Array a) = a
+name (Record a) = a
+
+data Element 
+  = Var String 
+  | Array String 
+  | Record String 
+
+eqElement :: Element -> Element -> Boolean
+eqElement (Var a) (Var b) = a == b
+eqElement (Array a) (Array b) = a == b
+eqElement (Record a) (Record b) = a == b
+eqElement _ _ = false 
 
 mergeListList :: List (List Edge) -> List (List Edge) -> List (List Edge)
 mergeListList (a:as) b = mergeListList as (a:b)

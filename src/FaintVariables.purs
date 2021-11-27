@@ -2,12 +2,12 @@ module FaintVariables where
 
 import AST
 import ProgramGraph (pgProgram, highest)
-import ReachingDefinition (fvAExp, fvBExp, eqElement, Element(..))
+import ReachingDefinition (fvAExp, fvBExp)
 import AllTraversals (initAllTraversals)
 import LiveVariables (reverseEdges, Genset(..), Killset(..), mergeElement)
 import Data.List (List(..), concat, nubBy, singleton, (:), deleteBy, unionBy, reverse, null, intersectBy)
 import Prelude (negate, show, ($), (&&), (-), (<>), (==))
-import Basic
+import Basic (eqElement, eqElement, Element(..), Edge(..), Content(..))
 import DangerousVariables (removeElement)
 
 fvGenerate :: Program -> String

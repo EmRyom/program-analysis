@@ -63,11 +63,7 @@ eqGen (Gen a b c) (Gen d e f) = eqElement a d && b == e && c == f
 eqGen NoGen NoGen = true
 eqGen _ _ = false 
 
-eqElement :: Element -> Element -> Boolean
-eqElement (Var a) (Var b) = a == b
-eqElement (Array a) (Array b) = a == b
-eqElement (Record a) (Record b) = a == b
-eqElement _ _ = false 
+
 
 solveConstraint :: ReachingDefinition -> Edge -> ReachingDefinition
 solveConstraint (RD i a) edge = 
@@ -125,10 +121,6 @@ data Assignment         = A Element Int Int
                          -- Var/Arr|Out|In
 data Constraint         = C Int Int Killset Genset
                          -- Out|In|Kill|Gen
-data Element 
-  = Var String 
-  | Array String 
-  | Record String 
 data Genset 
   = Gen Element Int Int 
   | NoGen
@@ -213,10 +205,6 @@ replaceElementName e (a:as) =
   else (a:replaceElementName e as)
 replaceElementName e Nil = singleton e 
 
-name :: Element -> String
-name (Var a) = a
-name (Array a) = a
-name (Record a) = a
 
 printReachingDefinitions :: List (ReachingDefinition) -> String
 printReachingDefinitions (RD a b:as) = "RD(q" <> show a <> ")={" <> printRD b <> """}

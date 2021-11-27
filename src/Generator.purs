@@ -2,9 +2,26 @@ module Generator where
 
 import AST
 import Prelude (show, (<>))
+import Data.List (List(..), (:))
+import Data.Tuple.Nested ((/\))
+import Basic
 
 generate :: Program -> String
 generate (Program d s) = showDeclaration d <> showStatement s
+
+
+printSignParsing :: SignInitialisation -> String
+printSignParsing ((a /\ b):as) = a <> " = {" <> (printSigns b) <> "}" <> return <> printSignParsing as
+printSignParsing Nil = ""
+
+printSigns :: List Sign -> String
+printSigns (a:as) = (case a of 
+  Negative -> "-"
+  Positive -> "+"
+  Neutral -> "0") <> (case as of 
+    Nil -> ""
+    b -> "," <> printSigns as)
+printSigns Nil = ""
 
 return :: String 
 return = """
