@@ -2,22 +2,51 @@ module SignAnalysis where
 
 
 
-import Data.List (List(..), singleton, (:), nub, concat, nubBy)
-import ReachingDefinition
-import Basic 
-import AllTraversals
+import Data.List (List(..), singleton, (:), nub, concat, nubBy, union, null)
+import ReachingDefinition (defineVariables, defineVariablesStatement, mergeElement)
+import Basic (Content(..), Edge(..), Element(..), Sign(..), SignInitialisation, eqElement, name)
+import AllTraversals (initAllTraversals)
 import ProgramGraph (pgProgram)
 import Data.Maybe (Maybe(..))
-import Prelude
-import AST
+import Prelude (show, ($), (+), (<>), (==), (>), not)
+import AST (AExp(..), LExp(..), Opa(..), Program(..), Statement(..))
 import Data.Tuple.Nested ((/\))
-import Data.Tuple
+import Data.Tuple (Tuple)
 import Generator (printSigns)
+import Data.Eq
+import Data.Set (Set(..), fromFoldable, difference, size)
 
 
 data SignDetection = AS Int (List AbstractState) 
 
 type AbstractState = Tuple Element (List Sign)  
+
+
+
+
+
+eqSLAS :: AbstractState -> List AbstractState -> Boolean 
+eqSLAS a (b:bs) = if eqAS a b then true else eqSLAS a bs 
+eqSLAS _ Nil = false 
+
+
+eqAS :: AbstractState -> AbstractState -> Boolean
+eqAS a b = case (a /\ b) of
+     ((c /\ d) /\ (e /\ f)) -> if eqElement c e
+        then eqLS d f
+        else false 
+
+eqLS :: List Sign -> List Sign -> Boolean
+eqLS (x:xs) ys = if containSign x ys 
+  then eqLS xs ys 
+  else false 
+eqLS Nil _ = false
+    
+containSign :: Sign -> List Sign -> Boolean
+containSign x (y:ys) = if x == y 
+  then true 
+  else containSign x ys
+containSign _ Nil = false 
 
 
 
@@ -32,11 +61,11 @@ saGenerate p si = let edges = pgProgram p in case p of
 assemble :: List SignDetection -> Int -> List Element -> List SignDetection
 assemble allSD a elements = case findSA allSD a of
   Nil -> Nil
-  relevantSD -> (AS a (findElementAS (concatAS relevantSD) elements):assemble allSD (a+1) elements)
+  relevantSD -> ((AS a (findElementAS (relevantSD) elements)):assemble allSD (a+1) elements)
     
 
 concatAS :: List SignDetection -> List AbstractState
-concatAS (AS _ a:as) = (a:concatAS as)
+concatAS ((AS _ a):as) = concat (a:((concatAS as):Nil))
 concatAS Nil = Nil
 
 -- unifies AbstractState for all elements in list
@@ -45,7 +74,7 @@ findElementAS allAs (e:es) = ((e /\ (nub $ findElement allAs e)):findElementAS a
 findElementAS _ Nil = Nil
 
 findElement :: List AbstractState -> Element -> List Sign
-findElement ((a /\ signs):as) e = if eqElement a e then (signs:findElement as e) else findElement as e
+findElement ((a /\ signs):as) e = if eqElement a e then concat (signs:((findElement as e):Nil)) else findElement as e
 findElement Nil _ = Nil
 
 
@@ -54,13 +83,8 @@ recTraversalSA :: List (List Edge) -> SignDetection -> List (List SignDetection)
 recTraversalSA (a:as) sd = (recSignAnalysis a sd:recTraversalSA as sd)
 recTraversalSA Nil _ = Nil 
 
-
-findSSA :: List SignDetection -> Int -> SignDetection 
-findSSA (AS i a:as) u = AS i (findSA (AS i a:as) u)
-findSSA Nil _ = Nil 
-
 findSA :: List SignDetection -> Int -> List AbstractState 
-findSA (AS i a:as) u = if i == u then concat (a:(findSA as u:Nil)) else findSA as u
+findSA ((AS i a):as) u = if i == u then concat (a:((findSA as u):Nil)) else findSA as u
 findSA Nil _ = Nil
 
 recSignAnalysis :: List Edge -> SignDetection -> List SignDetection
@@ -84,20 +108,24 @@ signAnalysis (AS i es) (E _ b c) = case b of
   S s -> case s of 
     LDef x y -> case x of 
       LVar v -> (AS c (replaceSign es (Var v) (aexpSign y (AS i es))))
-      LArray v _ -> (AS c (addSign es (Array v) (aexpSign y (AS i es))))
+      LArray v z -> if not null $ union (aexpSign z (AS i es)) (Neutral:(Positive:Nil)) 
+        then (AS c (addSign es (Array v) (aexpSign y (AS i es))))
+        else (AS c es)
       LRfst v -> (AS c (addSign es (Record v) (aexpSign y (AS i es))))
       LRsnd v -> (AS c (addSign es (Record v) (aexpSign y (AS i es))))
-    RDef x y z -> (AS c (addSign es (Record x) (mergeSigns (aexpSign y (AS i es)) (aexpSign z (AS i es)))))
+    RDef x y z -> (AS c (replaceSign es (Record x) (mergeSigns (aexpSign y (AS i es)) (aexpSign z (AS i es)))))
     Read x -> case x of 
       LVar v -> (AS c (replaceSign es (Var v) allThree))
-      LArray v _ -> (AS c (replaceSign es (Array v) allThree))
+      LArray v z -> (AS c (replaceSign es (Array v) allThree))
       LRfst v -> (AS c (replaceSign es (Record v) allThree))
       LRsnd v -> (AS c (replaceSign es (Record v) allThree))
     _ -> (AS c es)
   _ -> (AS c es)
 
+
 allThree :: List Sign
 allThree = (Negative:(Neutral:(Positive:Nil)))
+
 
 replaceSign :: List AbstractState -> Element -> List Sign -> List AbstractState
 replaceSign ((i /\ e):es) a ne = if eqElement i a then ((i /\ ne):es) else ((i /\ e):replaceSign es a ne)
@@ -113,7 +141,9 @@ aexpSign l (AS x es) = case l of
   ANumber a -> singleton (if a > 0 then Positive else
                          if 0 > a then Negative else Neutral)
   AVar a -> findVar es a
-  AArray a _ -> findVar es a
+  AArray a z -> if not null $ union (aexpSign z (AS x es)) (Neutral:(Positive:Nil)) 
+    then findVar es a
+    else Nil
   ARfst a -> findVar es a
   ARsnd a -> findVar es a
   Arithmetic a op b -> recOps op (aexpSign a (AS x es)) (aexpSign b (AS x es)) Nil
@@ -209,6 +239,12 @@ operRemainder a b = case b of
       Negative -> (Neutral:(Positive:Nil))
       Neutral -> singleton Neutral
       Positive -> (Neutral:(Positive:Nil))
+
+
+
+
+
+
 
 
 

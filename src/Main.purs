@@ -1,12 +1,10 @@
 module Main where
 
 import SignAnalysis (saGenerate)
-import Prelude
-import AST
-import Worklist
+import Prelude (Unit, show, ($), (<$), (<$>), (<<<), (<>), (>>=))
+import AST (AExp(..), Declaration(..), LExp(..), Opa(..), Program(..), Statement(..))
+import WLreachingDefinition (rdWorklist)
 import AllTraversals (allTraversals, recursionLimit)
-
-import Basic
 import Concur.Core (Widget)
 import Concur.React (HTML)
 import Concur.React.DOM as D
