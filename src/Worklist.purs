@@ -3,11 +3,11 @@ module Worklist where
 import Data.CatList
 import Data.Maybe
 import Data.Tuple 
+import Data.Tuple.Nested ((/\))
 import Data.Eq
 import Basic 
 import Data.Ordering
 import Prelude ((==), not, (<>), show, ($), (&&), (>), (+))
-import Data.Tuple.Nested ((/\))
 import ProgramGraph
 import AST
 import Data.List (List(..), (:), nubBy, concat)
@@ -37,6 +37,10 @@ worklistQueue :: List Int -> CatList Int -> CatList Int
 worklistQueue (a:as) es = worklistQueue as (insert es a false)
 worklistQueue Nil es = es
 
+
+worklistStack :: List Int -> CatList Int -> CatList Int
+worklistStack (a:as) es = worklistStack as (insert es a true)
+worklistStack Nil es = es
 
 
 

@@ -4,6 +4,9 @@ import SignAnalysis (saGenerate)
 import Prelude (Unit, show, ($), (<$), (<$>), (<<<), (<>), (>>=))
 import AST (AExp(..), Declaration(..), LExp(..), Opa(..), Program(..), Statement(..))
 import WLreachingDefinition (rdWorklist)
+import WLsignAnalysis (saWorklist)
+import WLRPreachingDefinition (rdRPWorklist)
+import WLRPsignAnalysis (saRPWorklist)
 import AllTraversals (allTraversals, recursionLimit)
 import Concur.Core (Widget)
 import Concur.React (HTML)
@@ -124,6 +127,9 @@ showState s = case parse s.currentText of
       5 -> fvGenerate p 
       6 -> saGenerate p u
       7 -> rdWorklist p
+      8 -> saWorklist p u 
+      9 -> rdRPWorklist p 
+      10 -> saRPWorklist p u 
       11 -> allTraversals p
       12 -> execute p 
       _ -> printSignParsing u <> generate p

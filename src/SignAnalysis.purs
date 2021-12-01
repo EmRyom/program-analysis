@@ -2,14 +2,14 @@ module SignAnalysis where
 
 
 
-import Data.List (List(..), singleton, (:), nub, concat, nubBy, union, null)
+import Data.List (List(..), singleton, (:), nub, concat, nubBy, union, null, intersect)
 import ReachingDefinition (defineVariables, defineVariablesStatement, mergeElement)
 import Basic (Content(..), Edge(..), Element(..), Sign(..), SignInitialisation, eqElement, name)
 import AllTraversals (initAllTraversals)
 import ProgramGraph (pgProgram)
 import Data.Maybe (Maybe(..))
-import Prelude (show, ($), (+), (<>), (==), (>), not)
-import AST (AExp(..), LExp(..), Opa(..), Program(..), Statement(..))
+import Prelude (show, ($), (+), (<>), (==), (>), not, (<))
+import AST (AExp(..), LExp(..), Opa(..), Program(..), Statement(..), Opr(..), BExp(..))
 import Data.Tuple.Nested ((/\))
 import Data.Tuple (Tuple)
 import Generator (printSigns)
@@ -31,8 +31,7 @@ eqSLAS _ Nil = false
 
 
 eqAS :: AbstractState -> AbstractState -> Boolean
-eqAS a b = case (a /\ b) of
-     ((c /\ d) /\ (e /\ f)) -> if eqElement c e
+eqAS (c /\ d) (e /\ f) =  if eqElement c e
         then eqLS d f
         else false 
 
@@ -120,11 +119,150 @@ signAnalysis (AS i es) (E _ b c) = case b of
       LRfst v -> (AS c (replaceSign es (Record v) allThree))
       LRsnd v -> (AS c (replaceSign es (Record v) allThree))
     _ -> (AS c es)
+  B s -> case s of
+    Relational x y z -> relationalAssignment (y) x z (AS c es)
+    False -> (AS c Nil)
+    --Negation (Relational x y z) -> relationalAssignment (reverseOperator y) x z (AS c es)
+    _ -> (AS c es)
   _ -> (AS c es)
 
 
 allThree :: List Sign
 allThree = (Negative:(Neutral:(Positive:Nil)))
+
+numberToSign :: Int -> Sign
+numberToSign c = if c>0 then Positive else if c<0 then Negative else Neutral
+
+relationalAssignment :: Opr -> AExp -> AExp -> SignDetection -> SignDetection
+relationalAssignment opr a b (AS i es) = case a of
+  ANumber c -> case b of 
+    AVar d -> (AS i (replaceSign es (Var d) $ intersect (findVar es d) $ (operRelational (revSharpOperator opr)) (numberToSign c)))
+    AArray d _ -> (AS i (addSign es (Array d) $ intersect (findVar es d) $ (operRelational (revSharpOperator opr)) (numberToSign c)))
+    ARfst d -> (AS i (replaceSign es (Record d) $ intersect (findVar es d) $ (operRelational (revSharpOperator opr)) (numberToSign c)))
+    ARsnd d -> (AS i (replaceSign es (Record d) $ intersect (findVar es d) $ (operRelational (revSharpOperator opr)) (numberToSign c)))
+    _ -> (AS i es) 
+  AVar c -> case b of 
+    ANumber d -> (AS i (replaceSign es (Var c) $ intersect (findVar es c) $ (operRelational opr) (numberToSign d)))
+    AVar d -> case (AS i (replaceSign es (Var c) $ intersect (findVar es c) $ (allVariableSigns (opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Var d) $ intersect (findVar es d) $ (allVariableSigns (revSharpOperator opr) c (AS i es))))
+    AArray d _ -> case (AS i (replaceSign es (Var c) $ intersect (findVar es c) $ (allVariableSigns (opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (addSign es2 (Array d) $ intersect (findVar es d) $ (allVariableSigns (revSharpOperator opr) c (AS i es))))
+    ARfst d -> case (AS i (replaceSign es (Var c) $ intersect (findVar es c) $ (allVariableSigns (opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns (revSharpOperator opr) c (AS i es))))
+    ARsnd d -> case (AS i (replaceSign es (Var c) $ intersect (findVar es c) $ (allVariableSigns (opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns (revSharpOperator opr) c (AS i es))))
+    _ -> (AS i es) 
+  AArray c _ -> case b of 
+    ANumber d -> (AS i (replaceSign es (Array c) $ intersect (findVar es c) $ (operRelational (reverseOperator opr)) (numberToSign d)))
+    AVar d -> case (AS i (addSign es (Array c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Var d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    AArray d _ -> case (AS i (addSign es (Array c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (addSign es2 (Array d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    ARfst d -> case (AS i (addSign es (Array c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    ARsnd d -> case (AS i (addSign es (Array c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    _ -> (AS i es) 
+  ARfst c -> case b of 
+    ANumber d -> (AS i (replaceSign es (Record c) $ intersect (findVar es c) $ (operRelational (reverseOperator opr)) (numberToSign d)))
+    AVar d -> case (AS i (replaceSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns opr d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Var d) $ intersect (findVar es d) $ (allVariableSigns (reverseOperator opr) c (AS i es))))
+    AArray d _ -> case (AS i (addSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Array d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    ARfst d -> case (AS i (addSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    ARsnd d -> case (AS i (addSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    _ -> (AS i es) 
+  ARsnd c -> case b of 
+    ANumber d -> (AS i (replaceSign es (Record c) $ intersect (findVar es c) $ (operRelational (reverseOperator opr)) (numberToSign d)))
+    AVar d -> case (AS i (replaceSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns opr d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Var d) $ intersect (findVar es d) $ (allVariableSigns (reverseOperator opr) c (AS i es))))
+    AArray d _ -> case (AS i (addSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Array d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    ARfst d -> case (AS i (addSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    ARsnd d -> case (AS i (addSign es (Record c) $ intersect (findVar es c) $ (allVariableSigns (reverseOperator opr) d (AS i es)))) of 
+      (AS i es2) -> (AS i (replaceSign es2 (Record d) $ intersect (findVar es d) $ (allVariableSigns opr c (AS i es))))
+    _ -> (AS i es) 
+  _ -> (AS i es) 
+
+
+{-signsFromRelational :: Element -> Int -> Opr -> List Sign
+signsFromRelational a i opr = case a of 
+  Var b -> 
+  Array b -> 
+  Record b ->-}
+
+
+reverseOperator :: Opr -> Opr
+reverseOperator c = case c of
+  More -> LessEq
+  Less -> MoreEq
+  MoreEq -> Less
+  LessEq -> More
+  Eq -> NotEq
+  NotEq -> Eq 
+
+revSharpOperator :: Opr -> Opr
+revSharpOperator c = case c of
+  More -> Less
+  Less -> More
+  MoreEq -> LessEq
+  LessEq -> MoreEq 
+  Eq -> Eq
+  NotEq -> NotEq 
+
+
+operRelational :: Opr -> (Sign -> List Sign)
+operRelational a = case a of
+   More -> operMore 
+   Less -> operLess
+   MoreEq -> operMoreEq
+   LessEq -> operLessEq
+   Eq     -> operEq
+   NotEq  -> operNotEq
+
+
+allOperSign :: Opr -> List Sign -> List (List Sign)
+allOperSign opr (a:as) = (operRelational opr a:allOperSign opr as)
+allOperSign opr Nil = Nil
+
+
+allVariableSigns :: Opr -> String -> SignDetection -> List Sign
+allVariableSigns opr el (AS i es) =
+  let initSigns = findVar es el in
+  nub $ concat (allOperSign opr initSigns)
+
+
+-- What do these operations say about the leftmost operand?
+operMore :: Sign -> List Sign 
+operMore Positive = (Positive:Nil)
+operMore Neutral =  (Positive:Nil)
+operMore Negative = (Positive:(Neutral:(Negative:Nil)))
+
+operLess :: Sign -> List Sign 
+operLess Positive = (Positive:(Neutral:(Negative:Nil)))
+operLess Neutral =  (Negative:Nil)
+operLess Negative = (Negative:Nil)
+
+operMoreEq :: Sign -> List Sign 
+operMoreEq Positive = (Positive:Nil)
+operMoreEq Neutral  = (Positive:(Neutral:Nil))
+operMoreEq Negative = (Positive:(Neutral:(Negative:Nil)))
+
+operLessEq :: Sign -> List Sign 
+operLessEq Positive = (Positive:(Neutral:(Negative:Nil)))
+operLessEq Neutral  = (Neutral:(Negative:Nil))
+operLessEq Negative = (Negative:Nil)
+
+operEq :: Sign -> List Sign 
+operEq a = (a:Nil)
+
+operNotEq :: Sign -> List Sign 
+operNotEq Positive = (Neutral:(Negative:Nil))
+operNotEq Neutral  = (Positive:(Negative:Nil))
+operNotEq Negative = (Positive:(Neutral:Nil))
 
 
 replaceSign :: List AbstractState -> Element -> List Sign -> List AbstractState

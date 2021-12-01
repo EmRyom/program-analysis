@@ -1,4 +1,4 @@
-module WLreachingDefinition where
+module WLRPreachingDefinition where
 
 
 import Worklist (Worklist, extract, insert, empty, worklistQueue, worklistStack)
@@ -12,18 +12,18 @@ import ProgramGraph (highest, pgProgram)
 import AST (Program(..))
 import Data.List (List(..), (:), nubBy, concat)
 import ReachingDefinition (Assignment, ReachingDefinition(..), defineVariables, defineVariablesStatement, eqAssignment, mergeAssignment, mergeElement, printReachingDefinitions, solveConstraint, unknownDefinition)
+import ReversePostorder 
 
 
 
-
-rdWorklist :: Program -> String
-rdWorklist p = printReachingDefinitions (worklistRD p) <> """
+rdRPWorklist :: Program -> String
+rdRPWorklist p = printReachingDefinitions (worklistRD p) <> """
 """ <> pl p
 
 
 pl :: Program -> String
-pl p = printList (initAsQueue (pgProgram p))
-
+pl p = let edges = pgProgram p in case depthFirstSpanning edges of
+    (_ /\ a) -> printList a 
 
 printList :: List Int -> String
 printList (a:as) = show a <> " " <> printList as
@@ -36,10 +36,10 @@ worklistRD p = let edges = pgProgram p in case p of
     initWLRD edges elements
 
 initWLRD :: List Edge -> List Element -> List ReachingDefinition
-initWLRD edges elements = 
-    let worklist = worklistStack (initAsQueue edges) empty in
-    let dsquare = (unknownDefinition elements 0:initMemory edges) in 
-    recWLRD edges worklist dsquare
+initWLRD edges elements = case depthFirstSpanning edges of
+    (_ /\ a) -> let worklist = worklistStack a empty in
+        let dsquare = (unknownDefinition elements 0:initMemory edges) in 
+        recWLRD edges worklist dsquare
   
 initMemory :: List Edge -> List ReachingDefinition 
 initMemory edges = let end = highest edges 0 in recMemory 1 end

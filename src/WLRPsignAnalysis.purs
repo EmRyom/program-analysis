@@ -1,4 +1,4 @@
-module WLsignAnalysis where
+module WLRPsignAnalysis where
 
 
 import SignAnalysis
@@ -14,6 +14,7 @@ import Data.Tuple
 import Data.Tuple.Nested ((/\))
 import Data.Maybe
 import ReachingDefinition
+import ReversePostorder 
 
 
 test :: String
@@ -21,13 +22,13 @@ test = printSignDetection $ forOneEdge (E 1 (S (LDef (LVar "a") (ANumber 200))) 
 
 
 
-saWorklist :: Program -> SignInitialisation -> String
-saWorklist p si = let edges = pgProgram p in case p of
+saRPWorklist :: Program -> SignInitialisation -> String
+saRPWorklist p si = let edges = pgProgram p in case p of
   Program d s -> let elements = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in
     case checkElements si elements Nil of
         Nil -> "Sign initialisation invalid"
-        sd -> let dsquare = ((AS 0 sd):initMemory edges) in
-            let worklist = worklistQueue (initAsQueue edges) empty in
+        sd -> let dsquare = ((AS 0 sd):initMemory edges) in case depthFirstSpanning edges of
+            (_ /\ a) -> let worklist = worklistQueue a empty in
                 printSignDetection $ recWLSA edges worklist dsquare 
 
 
