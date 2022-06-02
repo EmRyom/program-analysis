@@ -5,13 +5,13 @@ import ReachingDefinition (defineVariables, defineVariablesStatement, fvAExp, me
 import ProgramGraph (highest, pgProgram) 
 import Basic (Element(..), eqElement, name, Edge(..), Content(..))
 import AllTraversals (initAllTraversals)
-import Data.List (List(..), concat, intersectBy, nubBy, null, reverse, (:))
+import Data.List (List(..), concat, intersectBy, nubByEq, null, reverse, (:))
 import Prelude (show, ($), (-), (<>), (==))
 
 
 dvGenerate :: Program -> String
 dvGenerate p = let edges = pgProgram p in case p of 
-  Program d s -> let els = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in 
+  Program d s -> let els = nubByEq eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in 
     printDangerousVariables (initDV edges els)
 
 
@@ -22,9 +22,9 @@ initDV edges elements =
   reverse $ assemble (firstDV:concat (recDV (initAllTraversals edges) firstDV)) limit
 
 assemble :: List DangerousVariable -> Int -> List DangerousVariable
-assemble as -1 = Nil 
+assemble as (-1) = Nil 
 assemble as i =
-  case nubBy eqElement (findDV as i) of
+  case nubByEq eqElement (findDV as i) of
     Nil -> (DV i Nil:assemble as (i-1))
     r -> (DV i r:assemble as (i-1))
 

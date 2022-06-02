@@ -3,10 +3,6 @@ module Main where
 import SignAnalysis (saGenerate)
 import Prelude (Unit, show, ($), (<$), (<$>), (<<<), (<>), (>>=))
 import AST (AExp(..), Declaration(..), LExp(..), Opa(..), Program(..), Statement(..))
-import WLreachingDefinition (rdWorklist)
-import WLsignAnalysis (saWorklist)
-import WLRPreachingDefinition (rdRPWorklist)
-import WLRPsignAnalysis (saRPWorklist)
 import AllTraversals (allTraversals, recursionLimit)
 import Concur.Core (Widget)
 import Concur.React (HTML)
@@ -32,13 +28,9 @@ type InputState = {currentText :: String}
 initProof :: String
 initProof = """/* 
   1: Program Graph
-On a simple algorithm:
+Analyses:
   2: Reaching Definitions   3: Dangerous Variables   4: Live Variables  
   5: Faint Variables        6: Detection of Signs
-On the worklist algorithm:
-                            Using a stack    Using reverse post-order 
-  Reaching Definitions      7                9 
-  Detection of Signs        8                10
 Extra:
   11: All possible traversals (recursion limit: """ <> show recursionLimit <> """)
   12: Run program (variables only)
@@ -126,10 +118,6 @@ showState s = case parse s.currentText of
       4 -> lvGenerate p
       5 -> fvGenerate p 
       6 -> saGenerate p u
-      7 -> rdWorklist p
-      8 -> saWorklist p u 
-      9 -> rdRPWorklist p 
-      10 -> saRPWorklist p u 
       11 -> allTraversals p
       12 -> execute p 
       _ -> printSignParsing u <> generate p

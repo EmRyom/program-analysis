@@ -2,7 +2,6 @@
   "name": "secav-unshortener",
   "version": "0.1.0",
   "description": "A web app that allows you to translate proofs into SeCaV Isabelle syntax",
-  "main": "index.js",
   "scripts": {
     "test": "spago test",
     "clean": "rimraf .cache .spago .psci_modules output .pulp-cache prod dist",
@@ -18,8 +17,8 @@
   "devDependencies": {
     "concurrently": "^5.3.0",
     "cross-env": "^7.0.3",
-    "parcel-bundler": "^1.12.5",
-    "purescript": "^0.13.8",
+    "parcel": "^2.0.0",
+    "purescript": "^0.14.5",
     "rimraf": "^3.0.2",
     "spago": "^0.15.3"
   },

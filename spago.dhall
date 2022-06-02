@@ -5,15 +5,18 @@ You can edit this file as you like.
 { sources = [ "src/**/*.purs", "test/**/*.purs" ]
 , name = "secav-unshortener"
 , dependencies =
-  [ "arrays"
-  , "catenable-lists"
-  , "concur-core"
+  [ "concur-core"
   , "concur-react"
   , "console"
+  , "control"
   , "effect"
   , "either"
+  , "lists"
+  , "maybe"
+  , "ordered-collections"
   , "parsing"
-  , "stringutils"
+  , "prelude"
+  , "tuples"
   ]
 , packages = ./packages.dhall
 }

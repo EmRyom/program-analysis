@@ -5,7 +5,7 @@ import ProgramGraph (pgProgram, highest)
 import ReachingDefinition (fvAExp, fvBExp)
 import AllTraversals (initAllTraversals)
 import LiveVariables (reverseEdges, Genset(..), Killset(..), mergeElement)
-import Data.List (List(..), concat, nubBy, singleton, (:), deleteBy, unionBy, reverse, null, intersectBy)
+import Data.List (List(..), concat, nubByEq, singleton, (:), deleteBy, unionBy, reverse, null, intersectBy)
 import Prelude (negate, show, ($), (&&), (-), (<>), (==))
 import Basic (eqElement, eqElement, Element(..), Edge(..), Content(..))
 import DangerousVariables (removeElement)
@@ -21,9 +21,9 @@ initFV edges =
   assemble (concat (recFV (initAllTraversals edges) (SLV limit Nil))) limit
 
 assemble :: List StronglyLiveVariable -> Int -> List StronglyLiveVariable
-assemble as -1 = Nil 
+assemble as (-1) = Nil 
 assemble as i =
-  case nubBy eqElement (findFV as i) of
+  case nubByEq eqElement (findFV as i) of
     Nil -> (SLV i Nil:assemble as (i-1))
     r -> (SLV i r:assemble as (i-1))
 

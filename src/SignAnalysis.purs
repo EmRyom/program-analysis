@@ -2,7 +2,7 @@ module SignAnalysis where
 
 
 
-import Data.List (List(..), singleton, (:), nub, concat, nubBy, union, null, intersect)
+import Data.List (List(..), singleton, (:), nubEq, concat, nubByEq, union, null, intersect)
 import ReachingDefinition (defineVariables, defineVariablesStatement, mergeElement)
 import Basic (Content(..), Edge(..), Element(..), Sign(..), SignInitialisation, eqElement, name)
 import AllTraversals (initAllTraversals)
@@ -51,7 +51,7 @@ containSign _ Nil = false
 
 saGenerate :: Program -> SignInitialisation -> String
 saGenerate p si = let edges = pgProgram p in case p of 
-  Program d s -> let elements = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in
+  Program d s -> let elements = nubByEq eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in
     case checkElements si elements Nil of
         Nil -> "Sign initialisation invalid"
         sd ->  let initialSD = AS 0 sd in printSignDetection $ assemble (concat ((initialSD:Nil):recTraversalSA (initAllTraversals edges) initialSD)) 0 elements
@@ -69,7 +69,7 @@ concatAS Nil = Nil
 
 -- unifies AbstractState for all elements in list
 findElementAS :: List AbstractState -> List Element -> List AbstractState
-findElementAS allAs (e:es) = ((e /\ (nub $ findElement allAs e)):findElementAS allAs es)
+findElementAS allAs (e:es) = ((e /\ (nubEq $ findElement allAs e)):findElementAS allAs es)
 findElementAS _ Nil = Nil
 
 findElement :: List AbstractState -> Element -> List Sign
@@ -232,7 +232,7 @@ allOperSign opr Nil = Nil
 allVariableSigns :: Opr -> String -> SignDetection -> List Sign
 allVariableSigns opr el (AS i es) =
   let initSigns = findVar es el in
-  nub $ concat (allOperSign opr initSigns)
+  nubEq $ concat (allOperSign opr initSigns)
 
 
 -- What do these operations say about the leftmost operand?
@@ -310,7 +310,7 @@ recOp o a (b:bs) result = case o of
 recOp _ _ Nil result = result 
 
 mergeSigns :: List Sign -> List Sign -> List Sign
-mergeSigns a b = nub $ concat (a:(b:Nil)) 
+mergeSigns a b = nubEq $ concat (a:(b:Nil)) 
 
 operAddition :: Sign -> Sign -> List Sign 
 operAddition a b = case a of 

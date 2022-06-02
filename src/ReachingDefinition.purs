@@ -4,12 +4,12 @@ import AST
 import ProgramGraph (pgProgram)
 import Basic
 import AllTraversals (initAllTraversals)
-import Data.List (List(..), concat, nubBy, singleton, (:))
+import Data.List (List(..), concat, nubByEq, singleton, (:))
 import Prelude (negate, show, ($), (&&), (+), (<>), (==))
 
 rdGenerate :: Program -> String
 rdGenerate p = let edges = pgProgram p in case p of 
-  Program d s -> let els = nubBy eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in
+  Program d s -> let els = nubByEq eqElement $ mergeElement (defineVariables d Nil) (defineVariablesStatement s) in
     printReachingDefinitions (initRD edges els)
 
 
@@ -20,7 +20,7 @@ initRD edges elements =
 
 assemble :: List ReachingDefinition -> Int -> List ReachingDefinition
 assemble as i =
-  case nubBy eqAssignment (findRD as i) of
+  case nubByEq eqAssignment (findRD as i) of
     Nil -> Nil
     r -> (RD i r:assemble as (i+1))
 

@@ -5,7 +5,7 @@ import AST
 import ProgramGraph (pgProgram, highest)
 import ReachingDefinition (defineVariables, defineVariablesStatement, fvAExp, fvBExp)
 import AllTraversals (initAllTraversals)
-import Data.List (List(..), concat, nubBy, singleton, (:), deleteBy, unionBy, reverse)
+import Data.List (List(..), concat, nubByEq, singleton, (:), deleteBy, unionBy, reverse)
 import Prelude (negate, show, ($), (&&), (-), (<>), (==))
 import Basic (Element(..), eqElement, Edge(..), Content(..))
 
@@ -26,9 +26,9 @@ initLV edges =
   assemble (concat (recLV (initAllTraversals edges) (LV limit Nil))) limit
 
 assemble :: List LiveVariable -> Int -> List LiveVariable
-assemble as -1 = Nil 
+assemble as (-1) = Nil 
 assemble as i =
-  case nubBy eqElement (findLV as i) of
+  case nubByEq eqElement (findLV as i) of
     Nil -> (LV i Nil:assemble as (i-1))
     r -> (LV i r:assemble as (i-1))
 
